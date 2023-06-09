@@ -16,9 +16,9 @@ const config = require("../config/auth.config.js");
  * @return Array
  */
 exports.login = async (req, res, next) => {
-  const { username, password } = req.body;
+  const { email, password } = req.body;
 
-  if (!username || !password) {
+  if (!email || !password) {
     return res.status(400).json({
       status: "error",
       message: "Bad request",
@@ -29,7 +29,7 @@ exports.login = async (req, res, next) => {
   try {
     await models.user
       .findOne({
-        where: { username: username },
+        where: { email: email },
         attributes: {
           exclude: ["createdAt", "updatedAt"],
         },
@@ -92,9 +92,9 @@ exports.login = async (req, res, next) => {
  * @return Array
  */
 exports.register = async (req, res, next) => {
-  const { name, username, password } = req.body;
+  const { email, password } = req.body;
 
-  if (!name || !username || !password) {
+  if (!email || !password) {
     return res.status(400).json({
       status: "error",
       message: "Bad request",
@@ -106,7 +106,7 @@ exports.register = async (req, res, next) => {
     await models.user
       .findOne({
         where: {
-          username: username,
+          email: email,
         },
       })
       .then((user) => {
@@ -120,8 +120,7 @@ exports.register = async (req, res, next) => {
         } else {
           models.user
             .create({
-              name: name,
-              username: username,
+              email: email,
               role: "user",
               password: bcrypt.hashSync(password, 10),
             })
