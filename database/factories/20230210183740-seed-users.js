@@ -8,6 +8,7 @@ module.exports = {
     const categories = [...Array(3)].map((_) => ({
       name: faker.name.firstName(),
       username: faker.internet.userName(),
+      role: "user",
       password: bcrypt.hashSync("password", 10),
       createdAt: new Date(),
       updatedAt: new Date(),
