@@ -19,11 +19,11 @@ Pastikan kalian sudah menginstall node js dengan versi >= 18 ke atas
 
 Buatlah satu database pada phpmyadmin atau semacam nya dan setting di .env lalu jalankan migration
 
-    npx sequelize-cli db:migrate
+    npx run db:migrate
 
 jika sudah melakukan migration lalu kita masukan data awal
 
-    npx sequelize-cli db:seed:all
+    npx run db:seed:all
 
 Jalankan file server.js
 
@@ -48,11 +48,11 @@ Make sure you have installed node js with version >= 18 and above
 
 Create a database on phpmyadmin or something like that and the settings on .env then run migration
 
-    npx sequelize-cli db:migrate
+    npx run db:migrate
 
 if you have done the migration then we enter the initial data
 
-    npx sequelize-cli db:seed:all
+    npx run db:seed:all
 
 Run the main.py file
 
