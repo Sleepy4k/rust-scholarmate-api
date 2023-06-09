@@ -1,5 +1,6 @@
 const http = require("http");
 const path = require("path");
+const cors = require("cors");
 const logger = require("morgan");
 const express = require("express");
 const createError = require("http-errors");
@@ -17,6 +18,7 @@ app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 app.use(express.static(path.join(__dirname, "public")));
 
+app.use(cors());
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -46,12 +48,20 @@ app.use(function (err, req, res, next) {
   res.locals.message = err.message;
   res.locals.error = err;
 
-  // render the error page
-  res.status(err.status || 500);
-  res.render("pages/error", {
-    title: "Adjex",
-    sub_title: "Error",
-  });
+  if (req.url.includes("/api")) {
+    res.status(err.status || 500).json({
+      status: "error",
+      message: err.message,
+      data: {},
+    });
+  } else {
+    // render the error page
+    res.status(err.status || 500);
+    res.render("pages/error", {
+      title: config.name,
+      sub_title: "Error",
+    });
+  }
 });
 
 /**
