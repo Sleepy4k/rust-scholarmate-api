@@ -37,7 +37,7 @@ exports.login = async (req, res, next) => {
       .then((user) => {
         if (!user) {
           return res.status(200).json({
-            status: "success",
+            status: "error",
             message: "Login failed",
             data: user || {},
           });
@@ -59,10 +59,16 @@ exports.login = async (req, res, next) => {
 
         req.session.token = token;
 
+        const detailUser = {
+          id: user.id,
+          email: user.email,
+          role: user.role,
+        };
+
         res.status(200).json({
           status: "success",
           message: "Login successful",
-          data: user || {},
+          data: detailUser || {},
           token: token,
         });
       })
@@ -112,7 +118,7 @@ exports.register = async (req, res, next) => {
       .then((user) => {
         if (user) {
           res.status(200).json({
-            status: "success",
+            status: "error",
             message: "User already exist",
             data: {},
           });
@@ -128,7 +134,7 @@ exports.register = async (req, res, next) => {
               res.status(200).json({
                 status: "success",
                 message: "Register successful",
-                data: user || {},
+                data: {},
               });
             })
             .catch((error) => {
