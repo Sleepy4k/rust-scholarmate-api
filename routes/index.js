@@ -9,7 +9,7 @@ router.get("/", function (req, res, next) {
     res.status(200);
       res.render("pages/index", {
         node: "18.15.0",
-        title: "Schoolar Mates",
+        title: name,
         author: "Benjamin4k",
       });
 });
@@ -18,12 +18,15 @@ router.get("/", function (req, res, next) {
 router.get("/api", function (req, res, next) {
     res.status(200).json({
         status: "success",
-        message: "Welcome to adjex api",
+        message: "Welcome to schoolar mates api",
         data: {}
     })
 });
 
-/* RESOURCE quiz. */
+/* RESOURCE auth. */
 router.use("/api/auth", require("./auth"));
+
+/* RESOURCE university. */
+router.use("/api/university", require("./university"));
 
 module.exports = router;
