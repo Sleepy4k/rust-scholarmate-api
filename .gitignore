@@ -1,7 +1,0 @@
-/node_modules
-/.vscode
-/.idea
-/tmp
-.env
-package-cpanel.json
-package-lock.json
