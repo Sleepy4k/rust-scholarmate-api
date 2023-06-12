@@ -1,18 +1,15 @@
 use chrono::Local;
 use serde_json::Value;
 use actix_web::{web::{self}, Responder};
-use bcrypt::{hash, verify, DEFAULT_COST};
 use std::{env, time::{SystemTime, UNIX_EPOCH}};
 use jsonwebtoken::{encode, Header, EncodingKey};
 
-use crate::{helpers::{response::*, database::connect_postgres, parse::*, validation::*}, structs::auth::*};
+use crate::{helpers::{response::*, database::connect_postgres, parse::*, validation::*, auth::*}, structs::auth::*};
 
 #[doc = "Verify user credentials and return token"]
 pub async fn login(body: web::Json<Value>) -> impl Responder {
   let email = to_str(map_get("email", body.to_owned()));
   let password = to_str(map_get("password", body.to_owned()));
-
-  let start_time = Local::now().timestamp();
 
   if check_if_empty(email.to_owned()) || check_if_empty(password.to_owned()) {
     return response_json(
@@ -22,6 +19,7 @@ pub async fn login(body: web::Json<Value>) -> impl Responder {
     )
   }
 
+  let start_time = Local::now().timestamp();
   let pool = connect_postgres().await;
   let user = match sqlx::query!("select * from users where email = $1 limit 1", email)
     .fetch_optional(&pool)
@@ -41,21 +39,13 @@ pub async fn login(body: web::Json<Value>) -> impl Responder {
       )
     };
 
-  match verify(password, &user.password) {
-    Ok(true) => (),
-    Ok(false) => {
-      return response_json(
-        "failed".to_string(),
-        "Email or password is wrong".to_string(),
-        vec![]
-      )
-    }
-    Err(_) => return response_json(
-      "error".to_string(),
-      "Something went wrong".to_string(),
+  if !verify_password(password.as_str(), &user.password) {
+    return response_json(
+      "failed".to_string(),
+      "Email or password is wrong".to_string(),
       vec![]
     )
-  };
+  }
 
   let token_time = SystemTime::now()
     .duration_since(UNIX_EPOCH)
@@ -104,8 +94,6 @@ pub async fn register(body: web::Json<Value>) -> impl Responder {
   let password = to_str(map_get("password", body.to_owned()));
   let role = to_str(map_get("role", body.to_owned()));
 
-  let start_time = Local::now().timestamp();
-
   if check_if_empty(email.to_owned()) || check_if_empty(password.to_owned()) || check_if_empty(role.to_owned()) {
     return response_json(
       "failed".to_string(),
@@ -114,6 +102,7 @@ pub async fn register(body: web::Json<Value>) -> impl Responder {
     )
   }
 
+  let start_time = Local::now().timestamp();
   let pool = connect_postgres().await;
 
   match sqlx::query!("select id from users where email = $1", email.to_owned())
@@ -134,7 +123,7 @@ pub async fn register(body: web::Json<Value>) -> impl Responder {
       )
     };
 
-  let hashed_password = hash(password, DEFAULT_COST).unwrap_or_else(|_| String::new());
+  let hashed_password = hash_password(password.as_str());
 
   match sqlx::query_as!(DetailUserStruct,
     "insert into users (email, password, role) values ($1, $2, $3) returning id, email, role",
@@ -156,24 +145,29 @@ pub async fn register(body: web::Json<Value>) -> impl Responder {
         detail_user
       )
     },
-    Err(_) => response_json(
-      "error".to_string(),
-      "Something went wrong".to_string(),
-      vec![]
-    )
+    Err(_) => {
+      let end_time = Local::now().timestamp();
+      let duration = modified_duration(start_time, end_time);
+  
+      println!("{}", duration);
+  
+      response_json(
+        "error".to_string(),
+        "Something went wrong".to_string(),
+        vec![]
+      )
+    }
   }
 }
 
 #[doc = "Logout user"]
 pub async fn logout() -> impl Responder {
-  let jwt_title = env::var("JWT_TOKEN_TITLE").unwrap_or_else(|_| String::from("auth_jwt_secret"));
-
   response_json_with_cookie(
     "success".to_string(),
-    "Successfully logout".to_string(),
+    "Successfully logged in".to_string(),
     vec![],
     "remove".to_string(),
-    jwt_title,
+    "auth_jwt_secret".to_string(),
     "".to_string()
   )
 }
