@@ -14,7 +14,7 @@ lazy_static! {
 #[doc = "Open connection to postgres database"]
 pub async fn open_postgres() -> PgPool {
   let url = env::var("DATABASE_URL")
-    .unwrap_or(format!("postgres://postgres:postgres@localhost:5137/postgres"));
+    .unwrap_or_else(|_| String::from("postgres://postgres:postgres@localhost:5137/postgres"));
   
   println!("database connect to {}", url);
 

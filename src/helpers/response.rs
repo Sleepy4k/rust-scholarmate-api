@@ -18,17 +18,17 @@ fn setup_code(status: String) -> StatusCode {
 
   // set status code
   if stats == "success" {
-      code = StatusCode::OK;
+    code = StatusCode::OK;
   } else if stats == "error" {
-      code = StatusCode::INTERNAL_SERVER_ERROR;
+    code = StatusCode::INTERNAL_SERVER_ERROR;
   } else if stats == "failed" {
-      code = StatusCode::BAD_REQUEST;
+    code = StatusCode::BAD_REQUEST;
   } else if stats == "unauthorize" {
-      code = StatusCode::UNAUTHORIZED;
+    code = StatusCode::UNAUTHORIZED;
   } else if stats == "forbidden" {
-      code = StatusCode::FORBIDDEN;
+    code = StatusCode::FORBIDDEN;
   } else if stats == "not found" {
-      code = StatusCode::NOT_FOUND;
+    code = StatusCode::NOT_FOUND;
   }
 
   code

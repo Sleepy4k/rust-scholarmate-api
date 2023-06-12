@@ -56,3 +56,9 @@ pub fn modified_duration(start_time: i64, end_time: i64) -> String {
 
   formatted_date.to_string()
 }
+
+#[doc = "Convert string to slug"]
+pub fn slugify(text: &str) -> String {
+  text
+    .replace(" ", "-")
+}
