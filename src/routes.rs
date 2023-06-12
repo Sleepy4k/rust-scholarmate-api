@@ -33,6 +33,10 @@ pub fn config(conf: &mut web::ServiceConfig) {
     .route("/student/{id}", web::put().to(update_student))
     .route("/student/{id}", web::delete().to(delete_student))
 
+    // application route
+    .route("/application", web::get().to(get_applications))
+    .route("/application/{id}", web::get().to(get_my_applications))
+
     // missing route
     .default_service(web::route().to(fallback));
 }
