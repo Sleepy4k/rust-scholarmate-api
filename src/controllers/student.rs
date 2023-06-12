@@ -87,7 +87,6 @@ pub async fn find_student(arg: web::Path<i32>) -> impl Responder {
     .await
     .unwrap();
 
-
   let result = convert_vec_to_values(data);
 
   if check_if_empty(result.to_owned()) {
