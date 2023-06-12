@@ -69,6 +69,7 @@ where
             let whitelist_routes: HashSet<String> = vec![
               "/student".to_owned(),
               "/university".to_owned(),
+              "/application".to_owned(),
               "/schoolarship".to_owned(),
             ].into_iter().collect();
 
