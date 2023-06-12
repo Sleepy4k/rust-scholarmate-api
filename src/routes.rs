@@ -34,6 +34,5 @@ pub fn config(conf: &mut web::ServiceConfig) {
     .route("/student/{id}", web::delete().to(delete_student))
 
     // missing route
-    .default_service(web::route().to(fallback))
-  ;
+    .default_service(web::route().to(fallback));
 }

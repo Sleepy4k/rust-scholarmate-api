@@ -5,6 +5,8 @@ use actix_web::{error, http::header, web::JsonConfig, App, HttpResponse, HttpSer
 
 use actix_api::*;
 
+extern crate argon2;
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   dotenv().ok();
@@ -23,7 +25,7 @@ async fn main() -> anyhow::Result<()> {
   let hostname = env::var("APP_HOST")
     .expect("no environment variable set for \"ENV STATUS\"")
     .parse::<String>()
-    .unwrap_or("localhost".to_string());
+    .unwrap_or_else(|_| String::from("localhost"));
 
   let server_url = format!("{}:{}", hostname, port);
 
@@ -48,10 +50,22 @@ async fn main() -> anyhow::Result<()> {
         .into()
       });
 
+    let app_name = env::var("APP_NAME")
+      .expect("APP_NAME not set")
+      .parse::<String>()
+      .unwrap_or_else(|_| String::from("Actix API"));
+
+    let app_name_slug = slugify(&format!("{}-{}", app_name, "version"));
+
+    let app_version = env::var("APP_VERSION")
+      .expect("APP_VERSION not set")
+      .parse::<String>()
+      .unwrap_or_else(|_| String::from("1.0.0"));
+
     App::new()
       .wrap(cors)
       .wrap(Logger::default())
-      .wrap(DefaultHeaders::new().add(("Service-Version", "1.0.0")))
+      .wrap(DefaultHeaders::new().add((app_name_slug.as_str(), app_version.as_str())))
       .wrap(cookie::CheckCookie)
       .app_data(json_config)
       .configure(routes::config)
