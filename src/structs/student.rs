@@ -2,7 +2,7 @@ use sqlx::FromRow;
 use chrono::NaiveDate;
 use serde::{Serialize};
 
-#[doc = "Detail user struct"]
+#[doc = "Student struct"]
 #[derive(Debug, Serialize, FromRow)]
 pub struct StudentStruct {
   pub id: i32,

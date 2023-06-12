@@ -1,6 +1,6 @@
 use serde::{Serialize};
 
-#[doc = "Detail user struct"]
+#[doc = "University struct"]
 #[derive(Debug, Serialize)]
 pub struct UniversityStruct {
   pub id: i32,
