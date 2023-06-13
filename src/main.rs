@@ -66,7 +66,7 @@ async fn main() -> anyhow::Result<()> {
       .wrap(cors)
       .wrap(Logger::default())
       .wrap(DefaultHeaders::new().add((app_name_slug.as_str(), app_version.as_str())))
-      // .wrap(cookie::CheckCookie)
+      .wrap(cookie::CheckCookie)
       .app_data(json_config)
       .configure(routes::config)
   })
