@@ -6,4 +6,5 @@ pub struct ForumStruct {
   pub id: i32,
   pub name: String,
   pub message: String,
+  pub image: Option<String>,
 }
