@@ -162,12 +162,14 @@ pub async fn register(body: web::Json<Value>) -> impl Responder {
 
 #[doc = "Logout user"]
 pub async fn logout() -> impl Responder {
+  let jwt_title = env::var("JWT_TOKEN_TITLE").unwrap_or_else(|_| String::from("auth_jwt_secret"));
+
   response_json_with_cookie(
     "success".to_string(),
     "Successfully logged in".to_string(),
     vec![],
     "remove".to_string(),
-    "auth_jwt_secret".to_string(),
+    jwt_title,
     "".to_string()
   )
 }
