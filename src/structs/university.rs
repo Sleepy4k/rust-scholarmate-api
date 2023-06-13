@@ -8,4 +8,5 @@ pub struct UniversityStruct {
   pub description: String,
   pub major: String,
   pub quantity: i32,
+  pub image: String,
 }
