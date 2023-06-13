@@ -24,15 +24,15 @@ pub async fn get_my_applications(arg: web::Path<i32>) -> impl Responder {
   let id = arg.to_owned();
 
   let pool = connect_postgres().await;
-  // let data = sqlx::query_as!(ApplicationStruct, "select id, student_id, univ_id from applications a join universities u on a.univ_id = u.id")
-  //   .fetch_all(&pool)
-  //   .await
-  //   .unwrap();
-
-  let data = sqlx::query_as!(ApplicationStruct, "select * from applications where student_id = $1", id)
+  let data = sqlx::query_as!(DetailApplicationStruct, "select applications.id, universities.name, universities.major, universities.image from applications join universities on applications.univ_id = universities.id where student_id = $1", id)
     .fetch_all(&pool)
     .await
     .unwrap();
+
+  // let data = sqlx::query_as!(ApplicationStruct, "select * from applications where student_id = $1", id)
+  //   .fetch_all(&pool)
+  //   .await
+  //   .unwrap();
 
   let result = convert_vec_to_values(data);
 
