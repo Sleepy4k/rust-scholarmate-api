@@ -37,6 +37,9 @@ pub fn config(conf: &mut web::ServiceConfig) {
     .route("/application", web::get().to(get_applications))
     .route("/application/{id}", web::get().to(get_my_applications))
 
+    // forum route
+    .route("/forum", web::get().to(get_forum))
+
     // missing route
     .default_service(web::route().to(fallback));
 }
