@@ -50,7 +50,7 @@ pub async fn post_join(body: web::Json<Value>) -> impl Responder {
     .await
     .unwrap();
 
-  let result = convert_vec_to_values(vec![data]);
+  let result = convert_vec_to_values(data);
 
   response_json(
     "success".to_string(),
