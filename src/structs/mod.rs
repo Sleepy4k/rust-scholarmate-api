@@ -1,13 +1,13 @@
-pub mod application;
-pub mod auth;
-pub mod forum;
-pub mod schoolarship;
-pub mod student;
-pub mod university;
+pub mod application_struct;
+pub mod auth_struct;
+pub mod forum_struct;
+pub mod schoolarship_struct;
+pub mod student_struct;
+pub mod university_struct;
 
-pub use application::*;
-pub use auth::*;
-pub use forum::*;
-pub use schoolarship::*;
-pub use student::*;
-pub use university::*;
+pub use application_struct::*;
+pub use auth_struct::*;
+pub use forum_struct::*;
+pub use schoolarship_struct::*;
+pub use student_struct::*;
+pub use university_struct::*;

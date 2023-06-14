@@ -2,7 +2,7 @@ use chrono::NaiveDate;
 use serde_json::Value;
 use actix_web::{web::{self}, Responder};
 
-use crate::{helpers::{response::*, database::connect_postgres, parse::*, validation::*}, structs::student::*};
+use crate::{helpers::{response::*, database::connect_postgres, parse::*, validation::*}, structs::student_struct::*};
 
 #[doc = "Add new student"]
 pub async fn post_join(body: web::Json<Value>) -> impl Responder {

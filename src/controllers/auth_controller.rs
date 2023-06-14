@@ -4,7 +4,7 @@ use actix_web::{web::{self}, Responder};
 use std::{env, time::{SystemTime, UNIX_EPOCH}};
 use jsonwebtoken::{encode, Header, EncodingKey};
 
-use crate::{helpers::{response::*, database::connect_postgres, parse::*, validation::*, auth::*}, structs::auth::*};
+use crate::{helpers::{response::*, database::connect_postgres, parse::*, validation::*, auth::*}, structs::auth_struct::*};
 
 #[doc = "Verify user credentials and return token"]
 pub async fn login(body: web::Json<Value>) -> impl Responder {

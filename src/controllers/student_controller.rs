@@ -2,7 +2,7 @@ use serde_json::Value;
 use chrono::NaiveDate;
 use actix_web::{web::{self}, Responder};
 
-use crate::{helpers::{response::*, database::connect_postgres, parse::*, validation::*}, structs::student::*};
+use crate::{helpers::{response::*, database::connect_postgres, parse::*, validation::*}, structs::student_struct::*};
 
 #[doc = "Get all student"]
 pub async fn get_student() -> impl Responder {

@@ -1,6 +1,6 @@
 use actix_web::{web::{self}, Responder};
 
-use crate::{helpers::{response::*, database::connect_postgres, parse::*}, structs::application::*};
+use crate::{helpers::{response::*, database::connect_postgres, parse::*}, structs::application_struct::*};
 
 #[doc = "Get all application"]
 pub async fn get_applications() -> impl Responder {

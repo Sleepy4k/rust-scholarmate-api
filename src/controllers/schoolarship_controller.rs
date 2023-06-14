@@ -1,7 +1,7 @@
 use serde_json::Value;
 use actix_web::{web::{self}, Responder};
 
-use crate::{helpers::{response::*, database::connect_postgres, parse::*, validation::*}, structs::schoolarship::*};
+use crate::{helpers::{response::*, database::connect_postgres, parse::*, validation::*}, structs::schoolarship_struct::*};
 
 #[doc = "Get all schoolarship"]
 pub async fn get_schoolarship() -> impl Responder {

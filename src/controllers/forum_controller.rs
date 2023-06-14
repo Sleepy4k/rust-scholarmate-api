@@ -1,6 +1,6 @@
 use actix_web::Responder;
 
-use crate::{helpers::{response::*, database::connect_postgres, parse::*}, structs::forum::*};
+use crate::{helpers::{response::*, database::connect_postgres, parse::*}, structs::forum_struct::*};
 
 #[doc = "Get all forum"]
 pub async fn get_forum() -> impl Responder {

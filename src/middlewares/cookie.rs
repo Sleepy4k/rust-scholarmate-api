@@ -5,7 +5,7 @@ use futures_util::future::LocalBoxFuture;
 use jsonwebtoken::{decode, Validation, DecodingKey};
 use actix_web::{Error, body::EitherBody, dev::{self, Service, ServiceRequest, ServiceResponse, Transform}};
 
-use crate::{helpers::response::response_json, structs::auth::TokenStruct};
+use crate::{helpers::response::response_json, structs::auth_struct::TokenStruct};
 
 pub struct CheckCookie;
 
