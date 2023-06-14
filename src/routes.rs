@@ -40,6 +40,9 @@ pub fn config(conf: &mut web::ServiceConfig) {
     // forum route
     .route("/forum", web::get().to(get_forum))
 
+    // join route
+    .route("/join", web::post().to(post_join))
+
     // missing route
     .default_service(web::route().to(fallback));
 }
