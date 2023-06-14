@@ -35,10 +35,9 @@ async fn main() -> anyhow::Result<()> {
     let cors = Cors::default()
       .allow_any_origin()
       .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
-      .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
-      .allowed_header(header::CONTENT_TYPE)
+      .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT, header::CONTENT_TYPE, header::ACCESS_CONTROL_ALLOW_ORIGIN])
       .supports_credentials()
-      .max_age(3600);
+      .max_age(604800);
 
     let json_config = JsonConfig::default()
       .limit(104857600)

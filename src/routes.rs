@@ -42,6 +42,7 @@ pub fn config(conf: &mut web::ServiceConfig) {
 
     // join route
     .route("/join", web::post().to(post_join))
+    .route("/join/{id}", web::put().to(put_join))
 
     // missing route
     .default_service(web::route().to(fallback));
