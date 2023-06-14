@@ -57,7 +57,7 @@ pub async fn login(body: web::Json<Value>) -> impl Responder {
     email: user.email.clone(),
     role: user.role.clone(),
     iat: token_time,
-    exp: token_time.saturating_add(60 * 60 * 24 * 7),
+    exp: token_time.saturating_add(604800),
   };
 
   let jwt_title = env::var("JWT_TOKEN_TITLE").unwrap_or_else(|_| String::from("auth_jwt_secret"));
