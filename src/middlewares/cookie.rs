@@ -75,7 +75,7 @@ where
 
             let whitelist_routes = Arc::new(whitelist_routes);
 
-            if whitelist_routes.contains(&path) && data_token.claims.role == "user" {
+            if whitelist_routes.contains(&path) && data_token.claims.role == "user" && path != "/join" {
               if method == "POST" || method == "PUT" || method == "DELETE" {
                 let request = request.into_parts().0;
 
