@@ -66,7 +66,16 @@ where
           &validation
         ) {
           Ok(data_token) => {
+            if path == "/join" {
+              let res = self.service.call(request);
+
+              return Box::pin(async move {
+                res.await.map(ServiceResponse::map_into_left_body)
+              });
+            }
+
             let whitelist_routes: HashSet<String> = vec![
+              "/forum".to_owned(),
               "/student".to_owned(),
               "/university".to_owned(),
               "/application".to_owned(),
@@ -75,7 +84,7 @@ where
 
             let whitelist_routes = Arc::new(whitelist_routes);
 
-            if whitelist_routes.contains(&path) && data_token.claims.role == "user" && path != "/join" {
+            if whitelist_routes.contains(&path) && data_token.claims.role == "user" {
               if method == "POST" || method == "PUT" || method == "DELETE" {
                 let request = request.into_parts().0;
 
