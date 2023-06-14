@@ -29,11 +29,6 @@ pub async fn get_my_applications(arg: web::Path<i32>) -> impl Responder {
     .await
     .unwrap();
 
-  // let data = sqlx::query_as!(ApplicationStruct, "select * from applications where student_id = $1", id)
-  //   .fetch_all(&pool)
-  //   .await
-  //   .unwrap();
-
   let result = convert_vec_to_values(data);
 
   response_json(
