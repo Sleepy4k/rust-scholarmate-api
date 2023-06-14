@@ -45,7 +45,7 @@ where
     let path = request.path().to_string();
     let method = request.method().to_string();
 
-    if path == "/" || path == "/login" || path == "/register" {
+    if path == "/" || path == "/login" || path == "/register" || path.starts_with("/join") {
       let res = self.service.call(request);
 
       return Box::pin(async move {
@@ -66,14 +66,6 @@ where
           &validation
         ) {
           Ok(data_token) => {
-            if path == "/join" {
-              let res = self.service.call(request);
-
-              return Box::pin(async move {
-                res.await.map(ServiceResponse::map_into_left_body)
-              });
-            }
-
             let whitelist_routes: HashSet<String> = vec![
               "/forum".to_owned(),
               "/student".to_owned(),
