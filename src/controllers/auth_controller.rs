@@ -4,7 +4,7 @@ use actix_web::{web::{self}, Responder};
 use std::{env, time::{SystemTime, UNIX_EPOCH}};
 use jsonwebtoken::{encode, Header, EncodingKey};
 
-use crate::{helpers::{response::*, database::connect_postgres, parse::*, validation::*, auth::*}, structs::auth_struct::*};
+use crate::{helpers::{response::*, database::connect_postgres, parse::*, validation::*, auth::*}, structs::{auth_struct::*, student_struct::*}};
 
 #[doc = "Verify user credentials and return token"]
 pub async fn login(body: web::Json<Value>) -> impl Responder {
@@ -65,11 +65,17 @@ pub async fn login(body: web::Json<Value>) -> impl Responder {
   let key = EncodingKey::from_secret(jwt_secret.as_ref());
   let token = encode(&Header::default(), &token_value, &key).unwrap_or_else(|_| String::new());
 
+  let student = sqlx::query_as!(StudentStruct, "select * from students where email = $1", user.email.clone())
+    .fetch_optional(&pool)
+    .await
+    .unwrap();
+
   let detail_user = convert_vec_to_values(vec![
     DetailUserStruct {
       id: user.id,
       email: user.email,
       role: user.role.clone(),
+      student: student,
     }
   ]);
 
@@ -125,7 +131,7 @@ pub async fn register(body: web::Json<Value>) -> impl Responder {
 
   let hashed_password = hash_password(password.as_str());
 
-  match sqlx::query_as!(DetailUserStruct,
+  match sqlx::query_as!(UserStruct,
     "insert into users (email, password, role) values ($1, $2, $3) returning id, email, role",
     email.to_owned(),
     hashed_password,
@@ -166,7 +172,7 @@ pub async fn logout() -> impl Responder {
 
   response_json_with_cookie(
     "success".to_string(),
-    "Successfully logged in".to_string(),
+    "Successfully logged out".to_string(),
     vec![],
     "remove".to_string(),
     jwt_title,

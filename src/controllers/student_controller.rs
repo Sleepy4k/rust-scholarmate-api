@@ -29,7 +29,7 @@ pub async fn add_student(body: web::Json<Value>) -> impl Responder {
   let phone = to_str(map_get("phone", body.to_owned()));
   let date_of_birth = to_str(map_get("date_of_birth", body.to_owned()));
   let region = to_str(map_get("region", body.to_owned()));
-  let register_number = to_i32(map_get("register_number", body.to_owned()));
+  let register_number = to_str(map_get("register_number", body.to_owned()));
   let toefl_score = to_i32(map_get("toefl_score", body.to_owned()));
   let ielts_score = to_i32(map_get("ielts_score", body.to_owned()));
 
@@ -113,7 +113,7 @@ pub async fn update_student(body: web::Json<Value>, arg: web::Path<i32>) -> impl
   let phone = to_str(map_get("phone", body.to_owned()));
   let date_of_birth = to_str(map_get("date_of_birth", body.to_owned()));
   let region = to_str(map_get("region", body.to_owned()));
-  let register_number = to_i32(map_get("register_number", body.to_owned()));
+  let register_number = to_str(map_get("register_number", body.to_owned()));
   let toefl_score = to_i32(map_get("toefl_score", body.to_owned()));
   let ielts_score = to_i32(map_get("ielts_score", body.to_owned()));
 
@@ -128,6 +128,25 @@ pub async fn update_student(body: web::Json<Value>, arg: web::Path<i32>) -> impl
   let dob = NaiveDate::parse_from_str(date_of_birth.as_str(), "%Y-%m-%d").unwrap();
 
   let pool = connect_postgres().await;
+
+  match sqlx::query!("select * from students where id = $1 limit 1", id.clone())
+    .fetch_optional(&pool)
+    .await {
+      Ok(Some(_)) => (),
+      Ok(None) => {
+        return response_json(
+          "failed".to_string(),
+          "Student not found".to_string(),
+          vec![]
+        )
+      }
+      Err(_) => return response_json(
+        "error".to_string(),
+        "Something went wrong".to_string(),
+        vec![]
+      )
+    };
+
   let data = sqlx::query_as!(StudentStruct, "update students set first_name = $1, last_name = $2, email = $3, phone = $4, date_of_birth = $5, region = $6, register_number = $7, toefl_score = $8, ielts_score = $9 where id = $10 returning *", first_name, last_name, email, phone, dob, region, register_number, toefl_score, ielts_score, id)
     .fetch_all(&pool)
     .await
@@ -155,6 +174,25 @@ pub async fn delete_student(arg: web::Path<i32>) -> impl Responder {
   let id = arg.to_owned();
 
   let pool = connect_postgres().await;
+
+  match sqlx::query!("select * from students where id = $1 limit 1", id.clone())
+    .fetch_optional(&pool)
+    .await {
+      Ok(Some(_)) => (),
+      Ok(None) => {
+        return response_json(
+          "failed".to_string(),
+          "Student not found".to_string(),
+          vec![]
+        )
+      }
+      Err(_) => return response_json(
+        "error".to_string(),
+        "Something went wrong".to_string(),
+        vec![]
+      )
+    };
+
   let data = sqlx::query_as!(StudentStruct, "delete from students where id = $1 returning *", id)
     .fetch_all(&pool)
     .await

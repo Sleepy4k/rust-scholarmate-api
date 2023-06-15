@@ -12,11 +12,11 @@ pub async fn post_join(body: web::Json<Value>) -> impl Responder {
   let phone = to_str(map_get("phone", body.to_owned()));
   let date_of_birth = to_str(map_get("date_of_birth", body.to_owned()));
   let region = to_str(map_get("region", body.to_owned()));
-  let register_number = to_i32(map_get("register_number", body.to_owned()));
+  let register_number = to_str(map_get("register_number", body.to_owned()));
   let toefl_score = to_i32(map_get("toefl_score", body.to_owned()));
   let ielts_score = to_i32(map_get("ielts_score", body.to_owned()));
 
-  if check_if_empty(first_name.to_owned()) || check_if_empty(last_name.to_owned()) || check_if_empty(email.to_owned()) || check_if_empty(phone.to_owned()) || check_if_empty(date_of_birth.to_owned()) || check_if_empty(region.to_owned()) {
+  if check_if_empty(first_name.to_owned()) || check_if_empty(last_name.to_owned()) || check_if_empty(email.to_owned()) || check_if_empty(phone.to_owned()) || check_if_empty(date_of_birth.to_owned()) || check_if_empty(region.to_owned()) || check_if_empty(register_number.to_owned()) {
     return response_json(
       "failed".to_string(),
       "Please fill all the fields".to_string(),
@@ -68,11 +68,11 @@ pub async fn put_join(body: web::Json<Value>, arg: web::Path<i32>) -> impl Respo
   let phone = to_str(map_get("phone", body.to_owned()));
   let date_of_birth = to_str(map_get("date_of_birth", body.to_owned()));
   let region = to_str(map_get("region", body.to_owned()));
-  let register_number = to_i32(map_get("register_number", body.to_owned()));
+  let register_number = to_str(map_get("register_number", body.to_owned()));
   let toefl_score = to_i32(map_get("toefl_score", body.to_owned()));
   let ielts_score = to_i32(map_get("ielts_score", body.to_owned()));
 
-  if check_if_empty(first_name.to_owned()) || check_if_empty(last_name.to_owned()) || check_if_empty(email.to_owned()) || check_if_empty(phone.to_owned()) || check_if_empty(date_of_birth.to_owned()) || check_if_empty(region.to_owned()) {
+  if check_if_empty(first_name.to_owned()) || check_if_empty(last_name.to_owned()) || check_if_empty(email.to_owned()) || check_if_empty(phone.to_owned()) || check_if_empty(date_of_birth.to_owned()) || check_if_empty(region.to_owned()) || check_if_empty(register_number.to_owned()) {
     return response_json(
       "failed".to_string(),
       "Please fill all the fields".to_string(),

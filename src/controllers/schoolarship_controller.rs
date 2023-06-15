@@ -115,6 +115,25 @@ pub async fn update_schoolarship(body: web::Json<Value>, arg: web::Path<i32>) ->
   }
 
   let pool = connect_postgres().await;
+
+  match sqlx::query!("select * from schoolarships where id = $1 limit 1", id.clone())
+    .fetch_optional(&pool)
+    .await {
+      Ok(Some(_)) => (),
+      Ok(None) => {
+        return response_json(
+          "failed".to_string(),
+          "Schoolarship not found".to_string(),
+          vec![]
+        )
+      }
+      Err(_) => return response_json(
+        "error".to_string(),
+        "Something went wrong".to_string(),
+        vec![]
+      )
+    };
+
   let data = sqlx::query_as!(SchoolarshipStruct, "update schoolarships set name = $1, description = $2, major = $3, quantity = $4, requirement = $5 where id = $6 returning *", name, description, major, quantity, requirement, id)
     .fetch_all(&pool)
     .await
@@ -142,6 +161,25 @@ pub async fn delete_schoolarship(arg: web::Path<i32>) -> impl Responder {
   let id = arg.to_owned();
 
   let pool = connect_postgres().await;
+
+  match sqlx::query!("select * from schoolarships where id = $1 limit 1", id.clone())
+    .fetch_optional(&pool)
+    .await {
+      Ok(Some(_)) => (),
+      Ok(None) => {
+        return response_json(
+          "failed".to_string(),
+          "Schoolarship not found".to_string(),
+          vec![]
+        )
+      }
+      Err(_) => return response_json(
+        "error".to_string(),
+        "Something went wrong".to_string(),
+        vec![]
+      )
+    };
+
   let data = sqlx::query_as!(SchoolarshipStruct, "delete from schoolarships where id = $1 returning *", id)
     .fetch_all(&pool)
     .await

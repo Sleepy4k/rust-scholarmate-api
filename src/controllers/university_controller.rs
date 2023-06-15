@@ -113,6 +113,25 @@ pub async fn update_university(body: web::Json<Value>, arg: web::Path<i32>) -> i
   }
 
   let pool = connect_postgres().await;
+
+  match sqlx::query!("select * from universities where id = $1 limit 1", id.clone())
+    .fetch_optional(&pool)
+    .await {
+      Ok(Some(_)) => (),
+      Ok(None) => {
+        return response_json(
+          "failed".to_string(),
+          "University not found".to_string(),
+          vec![]
+        )
+      }
+      Err(_) => return response_json(
+        "error".to_string(),
+        "Something went wrong".to_string(),
+        vec![]
+      )
+    };
+
   let data = sqlx::query_as!(UniversityStruct, "update universities set name = $1, description = $2, major = $3, quantity = $4 where id = $5 returning *", name, description, major, quantity, id)
     .fetch_all(&pool)
     .await
@@ -140,6 +159,25 @@ pub async fn delete_university(arg: web::Path<i32>) -> impl Responder {
   let id = arg.to_owned();
 
   let pool = connect_postgres().await;
+
+  match sqlx::query!("select * from universities where id = $1 limit 1", id.clone())
+    .fetch_optional(&pool)
+    .await {
+      Ok(Some(_)) => (),
+      Ok(None) => {
+        return response_json(
+          "failed".to_string(),
+          "University not found".to_string(),
+          vec![]
+        )
+      }
+      Err(_) => return response_json(
+        "error".to_string(),
+        "Something went wrong".to_string(),
+        vec![]
+      )
+    };
+
   let data = sqlx::query_as!(UniversityStruct, "delete from universities where id = $1 returning *", id)
     .fetch_all(&pool)
     .await
