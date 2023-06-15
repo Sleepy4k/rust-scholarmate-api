@@ -133,9 +133,7 @@ pub async fn register(body: web::Json<Value>) -> impl Responder {
 
   match sqlx::query_as!(UserStruct,
     "insert into users (email, password, role) values ($1, $2, $3) returning id, email, role",
-    email.to_owned(),
-    hashed_password,
-    role.to_owned()
+    email.to_owned(), hashed_password, role.to_owned()
   ).fetch_one(&pool).await {
     Ok(data) => {
       let detail_user = convert_vec_to_values(vec![data]);

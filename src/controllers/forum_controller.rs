@@ -9,7 +9,7 @@ pub async fn get_forum(arg: web::Path<i32>) -> impl Responder {
   let data = sqlx::query_as!(ForumStruct,
     "select universities.alias, forums.message, universities.image, universities.link from forums
       join universities on forums.univ_id = universities.id where student_id = $1
-      order by forums.id desc limit 5"
+      order by forums.id desc"
     , id)
     .fetch_all(&pool)
     .await

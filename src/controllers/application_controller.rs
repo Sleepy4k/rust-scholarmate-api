@@ -28,7 +28,7 @@ pub async fn get_my_applications(arg: web::Path<i32>) -> impl Responder {
   let data = sqlx::query_as!(DetailApplicationStruct,
     "select applications.id, universities.name, universities.major, universities.image, applications.status from applications
       join universities on applications.univ_id = universities.id where student_id = $1
-      order by universities.id desc limit 5"
+      order by universities.id desc"
     , id)
     .fetch_all(&pool)
     .await

@@ -45,7 +45,10 @@ pub async fn post_join(body: web::Json<Value>) -> impl Responder {
     };
 
   let dob = NaiveDate::parse_from_str(date_of_birth.as_str(), "%Y-%m-%d").unwrap();
-  let data = sqlx::query_as!(StudentStruct, "insert into students (first_name, last_name, email, phone, date_of_birth, region, register_number, toefl_score, ielts_score) values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning *", first_name, last_name, email, phone, dob, region, register_number, toefl_score, ielts_score)
+  let data = sqlx::query_as!(StudentStruct,
+    "insert into students (first_name, last_name, email, phone, date_of_birth, region, register_number, toefl_score, ielts_score)
+      values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning *",
+    first_name, last_name, email, phone, dob, region, register_number, toefl_score, ielts_score)
     .fetch_all(&pool)
     .await
     .unwrap();

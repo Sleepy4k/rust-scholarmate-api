@@ -63,7 +63,10 @@ pub async fn add_student(body: web::Json<Value>) -> impl Responder {
 
   let dob = NaiveDate::parse_from_str(date_of_birth.as_str(), "%Y-%m-%d").unwrap();
 
-  let data = sqlx::query_as!(StudentStruct, "insert into students (first_name, last_name, email, phone, date_of_birth, region, register_number, toefl_score, ielts_score) values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning *", first_name, last_name, email, phone, dob, region, register_number, toefl_score, ielts_score)
+  let data = sqlx::query_as!(StudentStruct,
+    "insert into students (first_name, last_name, email, phone, date_of_birth, region, register_number, toefl_score, ielts_score)
+      values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning *",
+    first_name, last_name, email, phone, dob, region, register_number, toefl_score, ielts_score)
     .fetch_all(&pool)
     .await
     .unwrap();
@@ -147,7 +150,10 @@ pub async fn update_student(body: web::Json<Value>, arg: web::Path<i32>) -> impl
       )
     };
 
-  let data = sqlx::query_as!(StudentStruct, "update students set first_name = $1, last_name = $2, email = $3, phone = $4, date_of_birth = $5, region = $6, register_number = $7, toefl_score = $8, ielts_score = $9 where id = $10 returning *", first_name, last_name, email, phone, dob, region, register_number, toefl_score, ielts_score, id)
+  let data = sqlx::query_as!(StudentStruct,
+    "update students set first_name = $1, last_name = $2, email = $3, phone = $4, date_of_birth = $5, region = $6, register_number = $7, toefl_score = $8, ielts_score = $9
+      where id = $10 returning *",
+    first_name, last_name, email, phone, dob, region, register_number, toefl_score, ielts_score, id)
     .fetch_all(&pool)
     .await
     .unwrap();

@@ -55,7 +55,9 @@ pub async fn add_university(body: web::Json<Value>) -> impl Responder {
       )
     };
 
-  let data = sqlx::query_as!(UniversityStruct, "insert into universities (name, description, major, quantity) values ($1, $2, $3, $4) returning *", name, description, major, quantity)
+  let data = sqlx::query_as!(UniversityStruct,
+    "insert into universities (name, description, major, quantity) values ($1, $2, $3, $4) returning *",
+    name, description, major, quantity)
     .fetch_all(&pool)
     .await
     .unwrap();
@@ -132,7 +134,9 @@ pub async fn update_university(body: web::Json<Value>, arg: web::Path<i32>) -> i
       )
     };
 
-  let data = sqlx::query_as!(UniversityStruct, "update universities set name = $1, description = $2, major = $3, quantity = $4 where id = $5 returning *", name, description, major, quantity, id)
+  let data = sqlx::query_as!(UniversityStruct,
+    "update universities set name = $1, description = $2, major = $3, quantity = $4 where id = $5 returning *",
+    name, description, major, quantity, id)
     .fetch_all(&pool)
     .await
     .unwrap();
