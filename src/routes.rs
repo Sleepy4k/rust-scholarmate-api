@@ -38,7 +38,7 @@ pub fn config(conf: &mut web::ServiceConfig) {
     .route("/application/{id}", web::get().to(get_my_applications))
 
     // forum route
-    .route("/forum", web::get().to(get_forum))
+    .route("/forum/{id}", web::get().to(get_forum))
 
     // join route
     .route("/join", web::post().to(post_join))
