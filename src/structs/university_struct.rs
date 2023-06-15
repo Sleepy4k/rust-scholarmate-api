@@ -9,4 +9,6 @@ pub struct UniversityStruct {
   pub major: String,
   pub quantity: i32,
   pub image: String,
+  pub link: String,
+  pub alias: String,
 }

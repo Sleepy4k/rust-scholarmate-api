@@ -16,4 +16,5 @@ pub struct DetailApplicationStruct {
   pub name: String,
   pub major: String,
   pub image: String,
+  pub status: String,
 }

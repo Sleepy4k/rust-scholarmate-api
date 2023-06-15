@@ -3,8 +3,8 @@ use serde::{Serialize};
 #[doc = "Forum struct"]
 #[derive(Debug, Serialize)]
 pub struct ForumStruct {
-  pub id: i32,
-  pub name: String,
+  pub alias: String,
   pub message: String,
-  pub image: Option<String>,
+  pub image: String,
+  pub link: String,
 }

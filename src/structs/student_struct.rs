@@ -12,7 +12,7 @@ pub struct StudentStruct {
   pub phone: String,
   pub date_of_birth: NaiveDate,
   pub region: String,
-  pub register_number: i32,
+  pub register_number: String,
   pub toefl_score: i32,
   pub ielts_score: i32,
 }
