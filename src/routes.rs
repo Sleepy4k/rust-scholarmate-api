@@ -34,8 +34,9 @@ pub fn config(conf: &mut web::ServiceConfig) {
     .route("/student/{id}", web::delete().to(delete_student))
 
     // application route
-    .route("/application", web::get().to(get_applications))
-    .route("/application/{id}", web::get().to(get_my_applications))
+    .route("/application", web::get().to(get_application))
+    .route("/application/{id}", web::get().to(get_my_application))
+    .route("/application", web::post().to(add_application))
 
     // forum route
     .route("/forum/{id}", web::get().to(get_forum))
