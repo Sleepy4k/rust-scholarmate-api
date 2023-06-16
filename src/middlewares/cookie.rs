@@ -45,7 +45,7 @@ where
     let path = request.path().to_string();
     let method = request.method().to_string();
 
-    if path == "/" || path == "/login" || path == "/register" || path.starts_with("/join") {
+    if path == "/" || path == "/login" || path == "/register" || path.starts_with("/join") || path.starts_with("/application") {
       let res = self.service.call(request);
 
       return Box::pin(async move {
@@ -70,7 +70,6 @@ where
               "/forum".to_owned(),
               "/student".to_owned(),
               "/university".to_owned(),
-              "/application".to_owned(),
               "/schoolarship".to_owned(),
             ].into_iter().collect();
 
