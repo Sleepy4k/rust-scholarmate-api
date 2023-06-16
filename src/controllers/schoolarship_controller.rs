@@ -6,7 +6,10 @@ use crate::{helpers::{response::*, database::connect_postgres, parse::*, validat
 #[doc = "Get all schoolarship"]
 pub async fn get_schoolarship() -> impl Responder {
   let pool = connect_postgres().await;
-  let data = sqlx::query_as!(SchoolarshipStruct, "select * from schoolarships")
+  let data = sqlx::query_as!(DetailSchoolarshipStruct,
+    "select s.id, s.name, s.description, s.major, s.quantity, s.requirement,
+      u.id as univ_id, u.name as univ_name, u.alias as univ_alias, u.description as univ_description from schoolarships s
+      join universities u on s.univ_id = u.id")
     .fetch_all(&pool)
     .await
     .unwrap();
@@ -27,6 +30,7 @@ pub async fn add_schoolarship(body: web::Json<Value>) -> impl Responder {
   let major = to_str(map_get("major", body.to_owned()));
   let quantity = to_i32(map_get("quantity", body.to_owned()));
   let requirement = to_str(map_get("requirement", body.to_owned()));
+  let univ_id = to_i32(map_get("univ_id", body.to_owned()));
 
   if check_if_empty(name.to_owned()) || check_if_empty(description.to_owned()) || check_if_empty(major.to_owned()) || check_if_empty(requirement.to_owned()) {
     return response_json(
@@ -56,7 +60,7 @@ pub async fn add_schoolarship(body: web::Json<Value>) -> impl Responder {
       )
     };
 
-  let data = sqlx::query_as!(SchoolarshipStruct, "insert into schoolarships (name, description, major, quantity, requirement) values ($1, $2, $3, $4, $5) returning *", name, description, major, quantity, requirement)
+  let data = sqlx::query_as!(SchoolarshipStruct, "insert into schoolarships (name, description, major, quantity, requirement, univ_id) values ($1, $2, $3, $4, $5, $6) returning *", name, description, major, quantity, requirement, univ_id)
     .fetch_all(&pool)
     .await
     .unwrap();
@@ -105,6 +109,7 @@ pub async fn update_schoolarship(body: web::Json<Value>, arg: web::Path<i32>) ->
   let major = to_str(map_get("major", body.to_owned()));
   let quantity = to_i32(map_get("quantity", body.to_owned()));
   let requirement = to_str(map_get("requirement", body.to_owned()));
+  let univ_id = to_i32(map_get("univ_id", body.to_owned()));
 
   if check_if_empty(name.to_owned()) || check_if_empty(description.to_owned()) || check_if_empty(major.to_owned()) || check_if_empty(requirement.to_owned()) {
     return response_json(
@@ -135,8 +140,8 @@ pub async fn update_schoolarship(body: web::Json<Value>, arg: web::Path<i32>) ->
     };
 
   let data = sqlx::query_as!(SchoolarshipStruct,
-    "update schoolarships set name = $1, description = $2, major = $3, quantity = $4, requirement = $5 where id = $6 returning *",
-    name, description, major, quantity, requirement, id)
+    "update schoolarships set name = $1, description = $2, major = $3, quantity = $4, requirement = $5, univ_id = $6 where id = $7 returning *",
+    name, description, major, quantity, requirement, univ_id, id)
     .fetch_all(&pool)
     .await
     .unwrap();
