@@ -1,16 +1,15 @@
 use serde_json::Value;
 use actix_web::{web::{self}, Responder};
 
-use crate::{helpers::{response::*, database::connect_postgres, parse::*, validation::*}, structs::schoolarship_struct::*};
+use crate::{AppState, helpers::{response::*, parse::*, validation::*}, structs::schoolarship_struct::*};
 
 #[doc = "Get all schoolarship"]
-pub async fn get_schoolarship() -> impl Responder {
-  let pool = connect_postgres().await;
+pub async fn get_schoolarship(state: web::Data<AppState>) -> impl Responder {
   let data = sqlx::query_as!(DetailSchoolarshipStruct,
     "select s.id, s.name, s.description, s.quantity, s.requirement, u.id as univ_id,
       u.name as univ_name, u.alias as univ_alias, u.description as univ_description,
       u.major as univ_major from schoolarships s join universities u on s.univ_id = u.id")
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await
     .unwrap();
 
@@ -24,7 +23,7 @@ pub async fn get_schoolarship() -> impl Responder {
 }
 
 #[doc = "Add new schoolarship"]
-pub async fn add_schoolarship(body: web::Json<Value>) -> impl Responder {
+pub async fn add_schoolarship(state: web::Data<AppState>, body: web::Json<Value>) -> impl Responder {
   let name = to_str(map_get("name", body.to_owned()));
   let description = to_str(map_get("description", body.to_owned()));
   let major = to_str(map_get("major", body.to_owned()));
@@ -40,11 +39,9 @@ pub async fn add_schoolarship(body: web::Json<Value>) -> impl Responder {
     )
   }
 
-  let pool = connect_postgres().await;
-
   let schoolarship_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from schoolarships where name = $1) as schoolarship_exists")
     .bind(name.clone())
-    .fetch_one(&pool)
+    .fetch_one(&state.db)
     .await
     .unwrap_or(false);
 
@@ -60,7 +57,7 @@ pub async fn add_schoolarship(body: web::Json<Value>) -> impl Responder {
     "insert into schoolarships (name, description, quantity, requirement, univ_id)
       values ($1, $2, $3, $4, $5) returning *",
     name, description, quantity, requirement, univ_id)
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await
     .unwrap();
 
@@ -74,12 +71,11 @@ pub async fn add_schoolarship(body: web::Json<Value>) -> impl Responder {
 }
 
 #[doc = "Find schoolarship by id"]
-pub async fn find_schoolarship(arg: web::Path<i32>) -> impl Responder {
-  let id = arg.to_owned();
-  let pool = connect_postgres().await;
+pub async fn find_schoolarship(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
+  let id = path.into_inner();
 
   match sqlx::query_as!(SchoolarshipStruct, "select * from schoolarships where id = $1", id)
-    .fetch_optional(&pool)
+    .fetch_optional(&state.db)
     .await {
       Ok(Some(schoolarship_data)) => {
         let result = convert_vec_to_values(vec![schoolarship_data]);
@@ -106,8 +102,8 @@ pub async fn find_schoolarship(arg: web::Path<i32>) -> impl Responder {
 }
 
 #[doc = "Update schoolarship by id"]
-pub async fn update_schoolarship(body: web::Json<Value>, arg: web::Path<i32>) -> impl Responder {
-  let id = arg.to_owned();
+pub async fn update_schoolarship(state: web::Data<AppState>, body: web::Json<Value>, path: web::Path<i32>) -> impl Responder {
+  let id = path.into_inner();
   let name = to_str(map_get("name", body.to_owned()));
   let description = to_str(map_get("description", body.to_owned()));
   let major = to_str(map_get("major", body.to_owned()));
@@ -123,10 +119,9 @@ pub async fn update_schoolarship(body: web::Json<Value>, arg: web::Path<i32>) ->
     )
   }
 
-  let pool = connect_postgres().await;
   let schoolarship_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from schoolarships where id = $1) as schoolarship_exists")
     .bind(id.clone())
-    .fetch_one(&pool)
+    .fetch_one(&state.db)
     .await
     .unwrap_or(false);
 
@@ -141,7 +136,7 @@ pub async fn update_schoolarship(body: web::Json<Value>, arg: web::Path<i32>) ->
   let data = sqlx::query_as!(SchoolarshipStruct,
     "update schoolarships set name = $1, description = $2, quantity = $3, requirement = $4, univ_id = $5 where id = $6 returning *",
     name, description, quantity, requirement, univ_id, id)
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await
     .unwrap();
 
@@ -155,12 +150,11 @@ pub async fn update_schoolarship(body: web::Json<Value>, arg: web::Path<i32>) ->
 }
 
 #[doc = "Delete schoolarship by id"]
-pub async fn delete_schoolarship(arg: web::Path<i32>) -> impl Responder {
-  let id = arg.to_owned();
-  let pool = connect_postgres().await;
+pub async fn delete_schoolarship(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
+  let id = path.into_inner();
   let schoolarship_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from schoolarships where id = $1) as schoolarship_exists")
     .bind(id.clone())
-    .fetch_one(&pool)
+    .fetch_one(&state.db)
     .await
     .unwrap_or(false);
 
@@ -171,9 +165,9 @@ pub async fn delete_schoolarship(arg: web::Path<i32>) -> impl Responder {
       vec![]
     )
   }
-  
+
   let data = sqlx::query_as!(SchoolarshipStruct, "delete from schoolarships where id = $1 returning *", id)
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await
     .unwrap();
 

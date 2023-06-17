@@ -1,13 +1,12 @@
 use serde_json::Value;
 use actix_web::{web::{self}, Responder};
 
-use crate::{helpers::{response::*, database::connect_postgres, parse::*, validation::*}, structs::university_struct::*};
+use crate::{AppState, helpers::{response::*, parse::*, validation::*}, structs::university_struct::*};
 
 #[doc = "Get all university"]
-pub async fn get_university() -> impl Responder {
-  let pool = connect_postgres().await;
+pub async fn get_university(state: web::Data<AppState>) -> impl Responder {
   let data = sqlx::query_as!(UniversityStruct, "select * from universities")
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await
     .unwrap();
 
@@ -21,7 +20,7 @@ pub async fn get_university() -> impl Responder {
 }
 
 #[doc = "Add new university"]
-pub async fn add_university(body: web::Json<Value>) -> impl Responder {
+pub async fn add_university(state: web::Data<AppState>, body: web::Json<Value>) -> impl Responder {
   let name = to_str(map_get("name", body.to_owned()));
   let description = to_str(map_get("description", body.to_owned()));
   let major = to_str(map_get("major", body.to_owned()));
@@ -35,12 +34,10 @@ pub async fn add_university(body: web::Json<Value>) -> impl Responder {
     )
   }
 
-  let pool = connect_postgres().await;
-
   let univ_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from universities where name = $1 and major = $2) as univ_exists")
     .bind(name.clone())
     .bind(major.clone())
-    .fetch_one(&pool)
+    .fetch_one(&state.db)
     .await
     .unwrap_or(false);
 
@@ -55,7 +52,7 @@ pub async fn add_university(body: web::Json<Value>) -> impl Responder {
   let data = sqlx::query_as!(UniversityStruct,
     "insert into universities (name, description, major, quantity) values ($1, $2, $3, $4) returning *",
     name, description, major, quantity)
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await
     .unwrap();
 
@@ -69,12 +66,11 @@ pub async fn add_university(body: web::Json<Value>) -> impl Responder {
 }
 
 #[doc = "Find university by id"]
-pub async fn find_university(arg: web::Path<i32>) -> impl Responder {
-  let id = arg.to_owned();
-  let pool = connect_postgres().await;
+pub async fn find_university(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
+  let id = path.into_inner();
 
   match sqlx::query_as!(UniversityStruct, "select * from universities where id = $1", id)
-    .fetch_optional(&pool)
+    .fetch_optional(&state.db)
     .await {
       Ok(Some(univ_data)) => {
         let result = convert_vec_to_values(vec![univ_data]);
@@ -101,8 +97,8 @@ pub async fn find_university(arg: web::Path<i32>) -> impl Responder {
 }
 
 #[doc = "Update university by id"]
-pub async fn update_university(body: web::Json<Value>, arg: web::Path<i32>) -> impl Responder {
-  let id = arg.to_owned();
+pub async fn update_university(state: web::Data<AppState>, body: web::Json<Value>, path: web::Path<i32>) -> impl Responder {
+  let id = path.into_inner();
   let name = to_str(map_get("name", body.to_owned()));
   let description = to_str(map_get("description", body.to_owned()));
   let major = to_str(map_get("major", body.to_owned()));
@@ -116,11 +112,9 @@ pub async fn update_university(body: web::Json<Value>, arg: web::Path<i32>) -> i
     )
   }
 
-  let pool = connect_postgres().await;
-
   let univ_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from universities where id = $1) as univ_exists")
     .bind(id.clone())
-    .fetch_one(&pool)
+    .fetch_one(&state.db)
     .await
     .unwrap_or(false);
 
@@ -133,7 +127,7 @@ pub async fn update_university(body: web::Json<Value>, arg: web::Path<i32>) -> i
   }
 
   match sqlx::query!("select id from universities where name = $1 and major = $2 limit 1", name.clone(), major.clone())
-    .fetch_optional(&pool)
+    .fetch_optional(&state.db)
     .await {
       Ok(Some(univ_data)) => {
         if univ_data.id != id {
@@ -157,7 +151,7 @@ pub async fn update_university(body: web::Json<Value>, arg: web::Path<i32>) -> i
   let data = sqlx::query_as!(UniversityStruct,
     "update universities set name = $1, description = $2, major = $3, quantity = $4 where id = $5 returning *",
     name, description, major, quantity, id)
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await
     .unwrap();
 
@@ -171,12 +165,11 @@ pub async fn update_university(body: web::Json<Value>, arg: web::Path<i32>) -> i
 }
 
 #[doc = "Delete university by id"]
-pub async fn delete_university(arg: web::Path<i32>) -> impl Responder {
-  let id = arg.to_owned();
-  let pool = connect_postgres().await;
+pub async fn delete_university(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
+  let id = path.into_inner();
   let univ_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from universities where id = $1) as univ_exists")
     .bind(id.clone())
-    .fetch_one(&pool)
+    .fetch_one(&state.db)
     .await
     .unwrap_or(false);
 
@@ -189,7 +182,7 @@ pub async fn delete_university(arg: web::Path<i32>) -> impl Responder {
   }
 
   let data = sqlx::query_as!(UniversityStruct, "delete from universities where id = $1 returning *", id)
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await
     .unwrap();
 

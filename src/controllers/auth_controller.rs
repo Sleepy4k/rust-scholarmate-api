@@ -4,10 +4,10 @@ use actix_web::{web::{self}, Responder};
 use std::{env, time::{SystemTime, UNIX_EPOCH}};
 use jsonwebtoken::{encode, Header, EncodingKey};
 
-use crate::{helpers::{response::*, database::connect_postgres, parse::*, validation::*, auth::*}, structs::{auth_struct::*, student_struct::*}};
+use crate::{AppState, helpers::{response::*, parse::*, validation::*, auth::*}, structs::{auth_struct::*, student_struct::*}};
 
 #[doc = "Verify user credentials and return token"]
-pub async fn login(body: web::Json<Value>) -> impl Responder {
+pub async fn login(state: web::Data<AppState>, body: web::Json<Value>) -> impl Responder {
   let email = to_str(map_get("email", body.to_owned()));
   let password = to_str(map_get("password", body.to_owned()));
 
@@ -20,9 +20,8 @@ pub async fn login(body: web::Json<Value>) -> impl Responder {
   }
 
   let start_time = Local::now().timestamp();
-  let pool = connect_postgres().await;
   let user = match sqlx::query!("select * from users where email = $1 limit 1", email)
-    .fetch_optional(&pool)
+    .fetch_optional(&state.db)
     .await {
       Ok(Some(user)) => user,
       Ok(None) => {
@@ -66,7 +65,7 @@ pub async fn login(body: web::Json<Value>) -> impl Responder {
   let token = encode(&Header::default(), &token_value, &key).unwrap_or_else(|_| String::new());
 
   let student = sqlx::query_as!(StudentStruct, "select * from students where email = $1", user.email.clone())
-    .fetch_optional(&pool)
+    .fetch_optional(&state.db)
     .await
     .unwrap();
 
@@ -95,7 +94,7 @@ pub async fn login(body: web::Json<Value>) -> impl Responder {
 }
 
 #[doc = "Register new user"]
-pub async fn register(body: web::Json<Value>) -> impl Responder {
+pub async fn register(state: web::Data<AppState>, body: web::Json<Value>) -> impl Responder {
   let email = to_str(map_get("email", body.to_owned()));
   let password = to_str(map_get("password", body.to_owned()));
   let role = to_str(map_get("role", body.to_owned()));
@@ -109,10 +108,9 @@ pub async fn register(body: web::Json<Value>) -> impl Responder {
   }
 
   let start_time = Local::now().timestamp();
-  let pool = connect_postgres().await;
 
   match sqlx::query!("select id from users where email = $1", email.to_owned())
-    .fetch_optional(&pool)
+    .fetch_optional(&state.db)
     .await {
       Ok(Some(_)) => {
         return response_json(
@@ -134,7 +132,7 @@ pub async fn register(body: web::Json<Value>) -> impl Responder {
   match sqlx::query_as!(UserStruct,
     "insert into users (email, password, role) values ($1, $2, $3) returning id, email, role",
     email.to_owned(), hashed_password, role.to_owned()
-  ).fetch_one(&pool).await {
+  ).fetch_one(&state.db).await {
     Ok(data) => {
       let detail_user = convert_vec_to_values(vec![data]);
 

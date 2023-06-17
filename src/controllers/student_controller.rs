@@ -2,13 +2,12 @@ use serde_json::Value;
 use chrono::NaiveDate;
 use actix_web::{web::{self}, Responder};
 
-use crate::{helpers::{response::*, database::connect_postgres, parse::*, validation::*}, structs::student_struct::*};
+use crate::{AppState, helpers::{response::*, parse::*, validation::*}, structs::student_struct::*};
 
 #[doc = "Get all student"]
-pub async fn get_student() -> impl Responder {
-  let pool = connect_postgres().await;
+pub async fn get_student(state: web::Data<AppState>) -> impl Responder {
   let data = sqlx::query_as!(StudentStruct, "select * from students")
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await
     .unwrap();
 
@@ -22,7 +21,7 @@ pub async fn get_student() -> impl Responder {
 }
 
 #[doc = "Add new student"]
-pub async fn add_student(body: web::Json<Value>) -> impl Responder {
+pub async fn add_student(state: web::Data<AppState>, body: web::Json<Value>) -> impl Responder {
   let first_name = to_str(map_get("first_name", body.to_owned()));
   let last_name = to_str(map_get("last_name", body.to_owned()));
   let email = to_str(map_get("email", body.to_owned()));
@@ -41,13 +40,11 @@ pub async fn add_student(body: web::Json<Value>) -> impl Responder {
     )
   }
 
-  let pool = connect_postgres().await;
-
   let student_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from students where email = $1 or phone = $2 or register_number = $3) as student_exists")
     .bind(email.clone())
     .bind(phone.clone())
     .bind(register_number.clone())
-    .fetch_one(&pool)
+    .fetch_one(&state.db)
     .await
     .unwrap_or(false);
 
@@ -64,7 +61,7 @@ pub async fn add_student(body: web::Json<Value>) -> impl Responder {
     "insert into students (first_name, last_name, email, phone, date_of_birth, region, register_number, toefl_score, ielts_score)
       values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning *",
     first_name, last_name, email, phone, dob, region, register_number, toefl_score, ielts_score)
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await
     .unwrap();
 
@@ -78,12 +75,11 @@ pub async fn add_student(body: web::Json<Value>) -> impl Responder {
 }
 
 #[doc = "Find student by id"]
-pub async fn find_student(arg: web::Path<i32>) -> impl Responder {
-  let id = arg.to_owned();
-  let pool = connect_postgres().await;
+pub async fn find_student(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
+  let id = path.into_inner();
 
   match sqlx::query_as!(StudentStruct, "select * from students where id = $1", id)
-    .fetch_optional(&pool)
+    .fetch_optional(&state.db)
     .await {
       Ok(Some(student_data)) => {
         let result = convert_vec_to_values(vec![student_data]);
@@ -112,8 +108,8 @@ pub async fn find_student(arg: web::Path<i32>) -> impl Responder {
 }
 
 #[doc = "Update student by id"]
-pub async fn update_student(body: web::Json<Value>, arg: web::Path<i32>) -> impl Responder {
-  let id = arg.to_owned();
+pub async fn update_student(state: web::Data<AppState>, body: web::Json<Value>, path: web::Path<i32>) -> impl Responder {
+  let id = path.into_inner();
   let first_name = to_str(map_get("first_name", body.to_owned()));
   let last_name = to_str(map_get("last_name", body.to_owned()));
   let email = to_str(map_get("email", body.to_owned()));
@@ -132,11 +128,9 @@ pub async fn update_student(body: web::Json<Value>, arg: web::Path<i32>) -> impl
     )
   }
 
-  let pool = connect_postgres().await;
-
   let student_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from students where id = $1) as univ_exists")
     .bind(id.clone())
-    .fetch_one(&pool)
+    .fetch_one(&state.db)
     .await
     .unwrap_or(false);
 
@@ -149,7 +143,7 @@ pub async fn update_student(body: web::Json<Value>, arg: web::Path<i32>) -> impl
   }
 
   match sqlx::query!("select id from students where email = $1 or phone = $2 or register_number = $3 limit 1", email.clone(), phone.clone(), register_number.clone())
-    .fetch_optional(&pool)
+    .fetch_optional(&state.db)
     .await {
       Ok(Some(student_data)) => {
         if student_data.id != id {
@@ -175,7 +169,7 @@ pub async fn update_student(body: web::Json<Value>, arg: web::Path<i32>) -> impl
     "update students set first_name = $1, last_name = $2, email = $3, phone = $4, date_of_birth = $5,
       region = $6, register_number = $7, toefl_score = $8, ielts_score = $9 where id = $10 returning *",
     first_name, last_name, email, phone, dob, region, register_number, toefl_score, ielts_score, id)
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await
     .unwrap();
 
@@ -189,12 +183,11 @@ pub async fn update_student(body: web::Json<Value>, arg: web::Path<i32>) -> impl
 }
 
 #[doc = "Delete student by id"]
-pub async fn delete_student(arg: web::Path<i32>) -> impl Responder {
-  let id = arg.to_owned();
-  let pool = connect_postgres().await;
+pub async fn delete_student(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
+  let id = path.into_inner();
   let student_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from students where id = $1) as student_exists")
     .bind(id.clone())
-    .fetch_one(&pool)
+    .fetch_one(&state.db)
     .await
     .unwrap_or(false);
 
@@ -207,7 +200,7 @@ pub async fn delete_student(arg: web::Path<i32>) -> impl Responder {
   }
 
   let data = sqlx::query_as!(StudentStruct, "delete from students where id = $1 returning *", id)
-    .fetch_all(&pool)
+    .fetch_all(&state.db)
     .await
     .unwrap();
 
