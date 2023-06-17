@@ -7,9 +7,9 @@ use crate::{helpers::{response::*, database::connect_postgres, parse::*, validat
 pub async fn get_schoolarship() -> impl Responder {
   let pool = connect_postgres().await;
   let data = sqlx::query_as!(DetailSchoolarshipStruct,
-    "select s.id, s.name, s.description, s.major, s.quantity, s.requirement,
-      u.id as univ_id, u.name as univ_name, u.alias as univ_alias, u.description as univ_description from schoolarships s
-      join universities u on s.univ_id = u.id")
+    "select s.id, s.name, s.description, s.quantity, s.requirement, u.id as univ_id,
+      u.name as univ_name, u.alias as univ_alias, u.description as univ_description,
+      u.major as univ_major from schoolarships s join universities u on s.univ_id = u.id")
     .fetch_all(&pool)
     .await
     .unwrap();
@@ -57,9 +57,9 @@ pub async fn add_schoolarship(body: web::Json<Value>) -> impl Responder {
   }
 
   let data = sqlx::query_as!(SchoolarshipStruct,
-    "insert into schoolarships (name, description, major, quantity, requirement, univ_id)
-      values ($1, $2, $3, $4, $5, $6) returning *",
-    name, description, major, quantity, requirement, univ_id)
+    "insert into schoolarships (name, description, quantity, requirement, univ_id)
+      values ($1, $2, $3, $4, $5) returning *",
+    name, description, quantity, requirement, univ_id)
     .fetch_all(&pool)
     .await
     .unwrap();
@@ -139,8 +139,8 @@ pub async fn update_schoolarship(body: web::Json<Value>, arg: web::Path<i32>) ->
   }
 
   let data = sqlx::query_as!(SchoolarshipStruct,
-    "update schoolarships set name = $1, description = $2, major = $3, quantity = $4, requirement = $5, univ_id = $6 where id = $7 returning *",
-    name, description, major, quantity, requirement, univ_id, id)
+    "update schoolarships set name = $1, description = $2, quantity = $3, requirement = $4, univ_id = $5 where id = $6 returning *",
+    name, description, quantity, requirement, univ_id, id)
     .fetch_all(&pool)
     .await
     .unwrap();

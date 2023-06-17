@@ -84,17 +84,11 @@ pub async fn add_application(data: web::Json<Value>) -> impl Responder {
       )
     };
 
-  match sqlx::query!("select major, quantity from schoolarships where id = $1", schoolarship_id)
+  match sqlx::query!("select quantity from schoolarships where id = $1", schoolarship_id)
     .fetch_optional(&pool)
     .await {
       Ok(Some(schoolarship_data)) => {
-        if schoolarship_data.major != major {
-          return response_json(
-            "failed".to_string(),
-            "Major not found".to_string(),
-            vec![]
-          );
-        } else if schoolarship_data.quantity == 0 {
+        if schoolarship_data.quantity == 0 {
           return response_json(
             "failed".to_string(),
             "Schoolarship quota is full".to_string(),
