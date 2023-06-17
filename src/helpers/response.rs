@@ -72,7 +72,7 @@ pub fn response_json_with_cookie(status: String, message: String, data: Vec<Valu
 
   if method == "set" {
     let cookie = Cookie::build(cookie_title, cookie_value)
-      .secure(true)
+      .secure(false)
       .http_only(false)
       .same_site(SameSite::Strict)
       .max_age(Duration::days(7))
@@ -81,7 +81,7 @@ pub fn response_json_with_cookie(status: String, message: String, data: Vec<Valu
     response.cookie(cookie);
   } else if method == "remove" {
     let cookie = Cookie::build(cookie_title, cookie_value)
-      .secure(true)
+      .secure(false)
       .http_only(false)
       .same_site(SameSite::Strict)
       .max_age(Duration::seconds(0))

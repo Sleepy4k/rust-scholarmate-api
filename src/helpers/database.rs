@@ -13,14 +13,14 @@ lazy_static! {
 
 #[doc = "Open connection to postgres database"]
 pub async fn open_postgres() -> PgPool {
-  let url = env::var("DATABASE_URL")
+  let database_url = env::var("DATABASE_URL")
     .unwrap_or_else(|_| String::from("postgres://postgres:postgres@localhost:5137/postgres"));
   
-  println!("database connect to {}", url);
+  println!("database connect to {}", database_url);
 
   let pool = PgPoolOptions::new()
     .max_connections(10)
-    .connect(url.as_str())
+    .connect(&database_url)
     .await
     .expect("Can't connect to database");
 
@@ -29,7 +29,7 @@ pub async fn open_postgres() -> PgPool {
 
 #[doc = "Connect to postgres database"]
 pub async fn connect_postgres() -> PgPool {
-  let _db = POOL.get().await.to_owned();
+  let db = POOL.get().await.to_owned();
 
-  _db
+  db
 }
