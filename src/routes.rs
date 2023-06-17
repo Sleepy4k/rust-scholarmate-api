@@ -45,6 +45,9 @@ pub fn config(conf: &mut web::ServiceConfig) {
     .route("/join", web::post().to(post_join))
     .route("/join/{id}", web::put().to(put_join))
 
-    // missing route
+    // user route
+    .route("/user", web::get().to(get_user))
+
+    // fallback route
     .default_service(web::route().to(fallback));
 }
