@@ -163,14 +163,6 @@ pub async fn update_university(body: web::Json<Value>, arg: web::Path<i32>) -> i
 
   let result = convert_vec_to_values(data);
 
-  if check_if_empty(result.to_owned()) {
-    return response_json(
-      "failed".to_string(),
-      "University not found".to_string(),
-      vec![]
-    )
-  }
-
   response_json(
     "success".to_string(),
     "Successfully updated university".to_string(),
@@ -181,26 +173,20 @@ pub async fn update_university(body: web::Json<Value>, arg: web::Path<i32>) -> i
 #[doc = "Delete university by id"]
 pub async fn delete_university(arg: web::Path<i32>) -> impl Responder {
   let id = arg.to_owned();
-
   let pool = connect_postgres().await;
+  let univ_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from universities where id = $1) as univ_exists")
+    .bind(id.clone())
+    .fetch_one(&pool)
+    .await
+    .unwrap_or(false);
 
-  match sqlx::query!("select id from universities where id = $1 limit 1", id.clone())
-    .fetch_optional(&pool)
-    .await {
-      Ok(Some(_)) => (),
-      Ok(None) => {
-        return response_json(
-          "failed".to_string(),
-          "University not found".to_string(),
-          vec![]
-        )
-      }
-      Err(_) => return response_json(
-        "error".to_string(),
-        "Something went wrong".to_string(),
-        vec![]
-      )
-    };
+  if !univ_exists {
+    return response_json(
+      "failed".to_string(),
+      "University not found".to_string(),
+      vec![]
+    )
+  }
 
   let data = sqlx::query_as!(UniversityStruct, "delete from universities where id = $1 returning *", id)
     .fetch_all(&pool)
@@ -208,14 +194,6 @@ pub async fn delete_university(arg: web::Path<i32>) -> impl Responder {
     .unwrap();
 
   let result = convert_vec_to_values(data);
-
-  if check_if_empty(result.to_owned()) {
-    return response_json(
-      "failed".to_string(),
-      "University not found".to_string(),
-      vec![]
-    )
-  }
 
   response_json(
     "success".to_string(),

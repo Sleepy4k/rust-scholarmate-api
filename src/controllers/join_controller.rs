@@ -25,24 +25,21 @@ pub async fn post_join(body: web::Json<Value>) -> impl Responder {
   }
 
   let pool = connect_postgres().await;
+  let student_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from students where email = $1 or phone = $2 or register_number = $3) as student_exists")
+    .bind(email.clone())
+    .bind(phone.clone())
+    .bind(register_number.clone())
+    .fetch_one(&pool)
+    .await
+    .unwrap_or(false);
 
-  match sqlx::query!("select * from students where email = $1 limit 1", email.clone())
-    .fetch_optional(&pool)
-    .await {
-      Ok(Some(_)) => {
-        return response_json(
-          "failed".to_string(),
-          "Student already exists".to_string(),
-          vec![]
-        )
-      }
-      Ok(None) => (),
-      Err(_) => return response_json(
-        "error".to_string(),
-        "Something went wrong".to_string(),
-        vec![]
-      )
-    };
+  if student_exists {
+    return response_json(
+      "failed".to_string(),
+      "Student already exists".to_string(),
+      vec![]
+    )
+  }
 
   let dob = NaiveDate::parse_from_str(date_of_birth.as_str(), "%Y-%m-%d").unwrap();
   let data = sqlx::query_as!(StudentStruct,
@@ -84,27 +81,25 @@ pub async fn put_join(body: web::Json<Value>, arg: web::Path<i32>) -> impl Respo
   }
 
   let pool = connect_postgres().await;
+  let student_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from students where id = $1) as univ_exists")
+    .bind(id.clone())
+    .fetch_one(&pool)
+    .await
+    .unwrap_or(false);
 
-  match sqlx::query!("select * from students where id = $1 limit 1", id.clone())
-    .fetch_optional(&pool)
-    .await {
-      Ok(Some(_)) => (),
-      Ok(None) => {
-        return response_json(
-          "failed".to_string(),
-          "Student does not exist".to_string(),
-          vec![]
-        )
-      },
-      Err(_) => return response_json(
-        "error".to_string(),
-        "Something went wrong".to_string(),
-        vec![]
-      )
-    };
+  if !student_exists {
+    return response_json(
+      "failed".to_string(),
+      "Student not found".to_string(),
+      vec![]
+    )
+  }
 
   let dob = NaiveDate::parse_from_str(date_of_birth.as_str(), "%Y-%m-%d").unwrap();
-  let data = sqlx::query_as!(StudentStruct, "update students set first_name = $1, last_name = $2, email = $3, phone = $4, date_of_birth = $5, region = $6, register_number = $7, toefl_score = $8, ielts_score = $9 where id = $10 returning *", first_name, last_name, email, phone, dob, region, register_number, toefl_score, ielts_score, id)
+  let data = sqlx::query_as!(StudentStruct, 
+    "update students set first_name = $1, last_name = $2, email = $3, phone = $4, date_of_birth = $5,
+      region = $6, register_number = $7, toefl_score = $8, ielts_score = $9 where id = $10 returning *",
+    first_name, last_name, email, phone, dob, region, register_number, toefl_score, ielts_score, id)
     .fetch_all(&pool)
     .await
     .unwrap();

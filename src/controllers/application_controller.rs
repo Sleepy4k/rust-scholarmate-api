@@ -23,9 +23,7 @@ pub async fn get_application() -> impl Responder {
 #[doc = "Get user application"]
 pub async fn get_my_application(arg: web::Path<i32>) -> impl Responder {
   let id = arg.to_owned();
-
   let pool = connect_postgres().await;
-
   let data = sqlx::query_as!(DetailApplicationStruct,
     "select applications.id, universities.id as univ_id, universities.name, universities.major, universities.image, applications.status from applications
       join universities on applications.univ_id = universities.id where student_id = $1
@@ -118,22 +116,22 @@ pub async fn add_application(data: web::Json<Value>) -> impl Responder {
       )
     };
 
-  match sqlx::query!("select * from applications where univ_id = $1 and student_id = $2 and major = $3", univ_id, student_id, major)
-    .fetch_optional(&pool)
-    .await {
-      Ok(Some(_)) => return response_json(
-        "failed".to_string(),
-        "Application already exists".to_string(),
-        vec![]
-      ),
-      Ok(None) => (),
-      Err(_) => return response_json(
-        "error".to_string(),
-        "Something went wrong".to_string(),
-        vec![]
-      )
-    };
+  let app_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from applications where univ_id = $1 and student_id = $2 and major = $3) as app_exists")
+    .bind(univ_id.clone())
+    .bind(student_id.clone())
+    .bind(major.clone())
+    .fetch_one(&pool)
+    .await
+    .unwrap_or(false);
 
+  if app_exists {
+    return response_json(
+      "failed".to_string(),
+      "Application already exists".to_string(),
+      vec![]
+    )
+  }
+  
   let data = sqlx::query_as!(ApplicationStruct,
     "insert into applications (univ_id, student_id, status, major) values ($1, $2, $3, $4) returning *"
     , univ_id, student_id, status, major)

@@ -42,25 +42,24 @@ pub async fn add_schoolarship(body: web::Json<Value>) -> impl Responder {
 
   let pool = connect_postgres().await;
 
-  match sqlx::query!("select * from schoolarships where name = $1 limit 1", name.clone())
-    .fetch_optional(&pool)
-    .await {
-      Ok(Some(_)) => {
-        return response_json(
-          "failed".to_string(),
-          "Schoolarship already exists".to_string(),
-          vec![]
-        )
-      }
-      Ok(None) => (),
-      Err(_) => return response_json(
-        "error".to_string(),
-        "Something went wrong".to_string(),
-        vec![]
-      )
-    };
+  let schoolarship_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from schoolarships where name = $1) as schoolarship_exists")
+    .bind(name.clone())
+    .fetch_one(&pool)
+    .await
+    .unwrap_or(false);
 
-  let data = sqlx::query_as!(SchoolarshipStruct, "insert into schoolarships (name, description, major, quantity, requirement, univ_id) values ($1, $2, $3, $4, $5, $6) returning *", name, description, major, quantity, requirement, univ_id)
+  if schoolarship_exists {
+    return response_json(
+      "failed".to_string(),
+      "Schoolarship already exists".to_string(),
+      vec![]
+    )
+  }
+
+  let data = sqlx::query_as!(SchoolarshipStruct,
+    "insert into schoolarships (name, description, major, quantity, requirement, univ_id)
+      values ($1, $2, $3, $4, $5, $6) returning *",
+    name, description, major, quantity, requirement, univ_id)
     .fetch_all(&pool)
     .await
     .unwrap();
@@ -77,28 +76,33 @@ pub async fn add_schoolarship(body: web::Json<Value>) -> impl Responder {
 #[doc = "Find schoolarship by id"]
 pub async fn find_schoolarship(arg: web::Path<i32>) -> impl Responder {
   let id = arg.to_owned();
-
   let pool = connect_postgres().await;
-  let data = sqlx::query_as!(SchoolarshipStruct, "select * from schoolarships where id = $1", id)
-    .fetch_all(&pool)
-    .await
-    .unwrap();
 
-  let result = convert_vec_to_values(data);
+  match sqlx::query_as!(SchoolarshipStruct, "select * from schoolarships where id = $1", id)
+    .fetch_optional(&pool)
+    .await {
+      Ok(Some(schoolarship_data)) => {
+        let result = convert_vec_to_values(vec![schoolarship_data]);
 
-  if check_if_empty(result.to_owned()) {
-    return response_json(
-      "failed".to_string(),
-      "Schoolarship not found".to_string(),
-      vec![]
-    )
-  }
-
-  response_json(
-    "success".to_string(),
-    "Successfully retrieved schoolarship".to_string(),
-    result
-  )
+        return response_json(
+          "success".to_string(),
+          "Successfully retrieved schoolarship".to_string(),
+          result
+        )
+      },
+      Ok(None) => {
+        return response_json(
+          "failed".to_string(),
+          "Schoolarship not found".to_string(),
+          vec![]
+        )
+      }
+      Err(_) => return response_json(
+        "error".to_string(),
+        "Something went wrong".to_string(),
+        vec![]
+      )
+    };
 }
 
 #[doc = "Update schoolarship by id"]
@@ -120,24 +124,19 @@ pub async fn update_schoolarship(body: web::Json<Value>, arg: web::Path<i32>) ->
   }
 
   let pool = connect_postgres().await;
+  let schoolarship_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from schoolarships where id = $1) as schoolarship_exists")
+    .bind(id.clone())
+    .fetch_one(&pool)
+    .await
+    .unwrap_or(false);
 
-  match sqlx::query!("select * from schoolarships where id = $1 limit 1", id.clone())
-    .fetch_optional(&pool)
-    .await {
-      Ok(Some(_)) => (),
-      Ok(None) => {
-        return response_json(
-          "failed".to_string(),
-          "Schoolarship not found".to_string(),
-          vec![]
-        )
-      }
-      Err(_) => return response_json(
-        "error".to_string(),
-        "Something went wrong".to_string(),
-        vec![]
-      )
-    };
+  if !schoolarship_exists {
+    return response_json(
+      "failed".to_string(),
+      "Schoolarship not found".to_string(),
+      vec![]
+    )
+  }
 
   let data = sqlx::query_as!(SchoolarshipStruct,
     "update schoolarships set name = $1, description = $2, major = $3, quantity = $4, requirement = $5, univ_id = $6 where id = $7 returning *",
@@ -147,14 +146,6 @@ pub async fn update_schoolarship(body: web::Json<Value>, arg: web::Path<i32>) ->
     .unwrap();
 
   let result = convert_vec_to_values(data);
-
-  if check_if_empty(result.to_owned()) {
-    return response_json(
-      "failed".to_string(),
-      "Schoolarship not found".to_string(),
-      vec![]
-    )
-  }
 
   response_json(
     "success".to_string(),
@@ -166,41 +157,27 @@ pub async fn update_schoolarship(body: web::Json<Value>, arg: web::Path<i32>) ->
 #[doc = "Delete schoolarship by id"]
 pub async fn delete_schoolarship(arg: web::Path<i32>) -> impl Responder {
   let id = arg.to_owned();
-
   let pool = connect_postgres().await;
-
-  match sqlx::query!("select * from schoolarships where id = $1 limit 1", id.clone())
-    .fetch_optional(&pool)
-    .await {
-      Ok(Some(_)) => (),
-      Ok(None) => {
-        return response_json(
-          "failed".to_string(),
-          "Schoolarship not found".to_string(),
-          vec![]
-        )
-      }
-      Err(_) => return response_json(
-        "error".to_string(),
-        "Something went wrong".to_string(),
-        vec![]
-      )
-    };
-
-  let data = sqlx::query_as!(SchoolarshipStruct, "delete from schoolarships where id = $1 returning *", id)
-    .fetch_all(&pool)
+  let schoolarship_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from schoolarships where id = $1) as schoolarship_exists")
+    .bind(id.clone())
+    .fetch_one(&pool)
     .await
-    .unwrap();
+    .unwrap_or(false);
 
-  let result = convert_vec_to_values(data);
-
-  if check_if_empty(result.to_owned()) {
+  if !schoolarship_exists {
     return response_json(
       "failed".to_string(),
       "Schoolarship not found".to_string(),
       vec![]
     )
   }
+  
+  let data = sqlx::query_as!(SchoolarshipStruct, "delete from schoolarships where id = $1 returning *", id)
+    .fetch_all(&pool)
+    .await
+    .unwrap();
+
+  let result = convert_vec_to_values(data);
 
   response_json(
     "success".to_string(),
