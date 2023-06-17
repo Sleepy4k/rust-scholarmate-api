@@ -1,13 +1,13 @@
 use std::env;
 use dotenv::dotenv;
 use actix_cors::Cors;
-use actix_web::{error, http::header, web::JsonConfig, App, HttpResponse, HttpServer, middleware::{Logger, DefaultHeaders}};
+use actix_web::{error, http::header, web::{Data, JsonConfig}, App, HttpResponse, HttpServer, middleware::{Logger, DefaultHeaders}};
 
 use actix_api::*;
 
 extern crate argon2;
 
-#[tokio::main]
+#[actix_web::main]
 async fn main() -> anyhow::Result<()> {
   dotenv().ok();
 
@@ -29,13 +29,15 @@ async fn main() -> anyhow::Result<()> {
 
   let server_url = format!("{}:{}", hostname, port);
 
-  let _database = connect_postgres().await;
+  println!("Server running at http://{}/", server_url.to_owned());
 
-  let server = HttpServer::new(|| {
+  let database = connect_postgres().await;
+
+  let _ = HttpServer::new(move || {
     let cors = Cors::default()
       .allow_any_origin()
-      .allowed_methods(vec!["GET", "POST", "PUT", "DELETE"])
-      .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT, header::CONTENT_TYPE, header::ACCESS_CONTROL_ALLOW_ORIGIN])
+      .allowed_methods(vec!["GET", "POST", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"])
+      .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT, header::CONTENT_TYPE, header::ACCESS_CONTROL_ALLOW_ORIGIN, header::ACCESS_CONTROL_ALLOW_HEADERS, header::ACCESS_CONTROL_ALLOW_METHODS, header::ACCESS_CONTROL_ALLOW_CREDENTIALS])
       .supports_credentials()
       .max_age(604800);
 
@@ -67,14 +69,12 @@ async fn main() -> anyhow::Result<()> {
       .wrap(DefaultHeaders::new().add((app_name_slug.as_str(), app_version.as_str())))
       .wrap(cookie::CheckCookie)
       .app_data(json_config)
+      .app_data(Data::new(main_struct::AppState { db: database.clone() }))
       .configure(routes::config)
   })
-  .bind(server_url.to_owned())?
-  .run();
-  
-  println!("Server running at http://{}/", server_url);
-
-  server.await?;
+  .bind(server_url)?
+  .run()
+  .await;
 
   Ok(())
 }
