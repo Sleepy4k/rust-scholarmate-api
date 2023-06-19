@@ -1,10 +1,19 @@
 use actix_web::{web::{self}, Responder};
 
-use crate::{helpers::{response::response_json, parse::convert_vec_to_values, validation::check_if_empty}, structs::{university_struct::*, main_struct::*}};
+use crate::{
+  models::university_model::*,
+  schemas::university_schema::*,
+  structs::main_struct::AppState,
+  helpers::{
+    response::response_json,
+    validation::check_if_empty,
+    parse::convert_vec_to_values
+  }
+};
 
 #[doc = "Get all university"]
 pub async fn get_university(state: web::Data<AppState>) -> impl Responder {
-  let data = sqlx::query_as!(UniversityStruct, "select * from universities")
+  let data = sqlx::query_as!(UniversityModel, "select * from universities")
     .fetch_all(&state.db)
     .await
     .unwrap();
@@ -19,7 +28,7 @@ pub async fn get_university(state: web::Data<AppState>) -> impl Responder {
 }
 
 #[doc = "Add new university"]
-pub async fn add_university(state: web::Data<AppState>, body: web::Json<UniversityBodyStruct>) -> impl Responder {
+pub async fn add_university(state: web::Data<AppState>, body: web::Json<UniversitySchema>) -> impl Responder {
   let name = body.name.to_owned();
   let major = body.major.to_owned();
   let quantity = body.quantity.to_owned();
@@ -48,7 +57,7 @@ pub async fn add_university(state: web::Data<AppState>, body: web::Json<Universi
     )
   }
 
-  let data = sqlx::query_as!(UniversityStruct,
+  let data = sqlx::query_as!(UniversityModel,
     "insert into universities (name, description, major, quantity) values ($1, $2, $3, $4) returning *",
     name, description, major, quantity)
     .fetch_all(&state.db)
@@ -68,7 +77,7 @@ pub async fn add_university(state: web::Data<AppState>, body: web::Json<Universi
 pub async fn find_university(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
   let id = path.into_inner();
 
-  match sqlx::query_as!(UniversityStruct, "select * from universities where id = $1", id)
+  match sqlx::query_as!(UniversityModel, "select * from universities where id = $1", id)
     .fetch_optional(&state.db)
     .await {
       Ok(Some(univ_data)) => {
@@ -96,7 +105,7 @@ pub async fn find_university(state: web::Data<AppState>, path: web::Path<i32>) -
 }
 
 #[doc = "Update university by id"]
-pub async fn update_university(state: web::Data<AppState>, body: web::Json<UniversityBodyStruct>, path: web::Path<i32>) -> impl Responder {
+pub async fn update_university(state: web::Data<AppState>, body: web::Json<UniversitySchema>, path: web::Path<i32>) -> impl Responder {
   let id = path.into_inner();
   let name = body.name.to_owned();
   let major = body.major.to_owned();
@@ -147,7 +156,7 @@ pub async fn update_university(state: web::Data<AppState>, body: web::Json<Unive
       )
     };
 
-  let data = sqlx::query_as!(UniversityStruct,
+  let data = sqlx::query_as!(UniversityModel,
     "update universities set name = $1, description = $2, major = $3, quantity = $4 where id = $5 returning *",
     name, description, major, quantity, id)
     .fetch_all(&state.db)
@@ -180,7 +189,7 @@ pub async fn delete_university(state: web::Data<AppState>, path: web::Path<i32>)
     )
   }
 
-  let data = sqlx::query_as!(UniversityStruct, "delete from universities where id = $1 returning *", id)
+  let data = sqlx::query_as!(UniversityModel, "delete from universities where id = $1 returning *", id)
     .fetch_all(&state.db)
     .await
     .unwrap();

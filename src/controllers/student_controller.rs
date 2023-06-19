@@ -1,11 +1,20 @@
 use chrono::NaiveDate;
 use actix_web::{web::{self}, Responder};
 
-use crate::{helpers::{response::response_json, parse::convert_vec_to_values, validation::check_if_empty}, structs::{student_struct::*, main_struct::*}};
+use crate::{
+  models::student_model::*,
+  schemas::student_schema::*,
+  structs::main_struct::AppState,
+  helpers::{
+    response::response_json,
+    validation::check_if_empty,
+    parse::convert_vec_to_values
+  }
+};
 
 #[doc = "Get all student"]
 pub async fn get_student(state: web::Data<AppState>) -> impl Responder {
-  let data = sqlx::query_as!(StudentStruct, "select * from students")
+  let data = sqlx::query_as!(StudentModel, "select * from students")
     .fetch_all(&state.db)
     .await
     .unwrap();
@@ -20,7 +29,7 @@ pub async fn get_student(state: web::Data<AppState>) -> impl Responder {
 }
 
 #[doc = "Add new student"]
-pub async fn add_student(state: web::Data<AppState>, body: web::Json<StudentBodyStruct>) -> impl Responder {
+pub async fn add_student(state: web::Data<AppState>, body: web::Json<StudentSchema>) -> impl Responder {
   let first_name = body.first_name.to_owned();
   let last_name = body.last_name.to_owned();
   let email = body.email.to_owned();
@@ -56,7 +65,7 @@ pub async fn add_student(state: web::Data<AppState>, body: web::Json<StudentBody
   }
 
   let dob = NaiveDate::parse_from_str(date_of_birth.as_str(), "%Y-%m-%d").unwrap();
-  let data = sqlx::query_as!(StudentStruct,
+  let data = sqlx::query_as!(StudentModel,
     "insert into students (first_name, last_name, email, phone, date_of_birth, region, register_number, toefl_score, ielts_score)
       values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning *",
     first_name, last_name, email, phone, dob, region, register_number, toefl_score, ielts_score)
@@ -77,7 +86,7 @@ pub async fn add_student(state: web::Data<AppState>, body: web::Json<StudentBody
 pub async fn find_student(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
   let id = path.into_inner();
 
-  match sqlx::query_as!(StudentStruct, "select * from students where id = $1", id)
+  match sqlx::query_as!(StudentModel, "select * from students where id = $1", id)
     .fetch_optional(&state.db)
     .await {
       Ok(Some(student_data)) => {
@@ -107,7 +116,7 @@ pub async fn find_student(state: web::Data<AppState>, path: web::Path<i32>) -> i
 }
 
 #[doc = "Update student by id"]
-pub async fn update_student(state: web::Data<AppState>, body: web::Json<StudentBodyStruct>, path: web::Path<i32>) -> impl Responder {
+pub async fn update_student(state: web::Data<AppState>, body: web::Json<StudentSchema>, path: web::Path<i32>) -> impl Responder {
   let id = path.into_inner();
   let first_name = body.first_name.to_owned();
   let last_name = body.last_name.to_owned();
@@ -164,7 +173,7 @@ pub async fn update_student(state: web::Data<AppState>, body: web::Json<StudentB
     };
 
   let dob = NaiveDate::parse_from_str(date_of_birth.as_str(), "%Y-%m-%d").unwrap();
-  let data = sqlx::query_as!(StudentStruct,
+  let data = sqlx::query_as!(StudentModel,
     "update students set first_name = $1, last_name = $2, email = $3, phone = $4, date_of_birth = $5,
       region = $6, register_number = $7, toefl_score = $8, ielts_score = $9 where id = $10 returning *",
     first_name, last_name, email, phone, dob, region, register_number, toefl_score, ielts_score, id)
@@ -198,7 +207,7 @@ pub async fn delete_student(state: web::Data<AppState>, path: web::Path<i32>) ->
     )
   }
 
-  let data = sqlx::query_as!(StudentStruct, "delete from students where id = $1 returning *", id)
+  let data = sqlx::query_as!(StudentModel, "delete from students where id = $1 returning *", id)
     .fetch_all(&state.db)
     .await
     .unwrap();

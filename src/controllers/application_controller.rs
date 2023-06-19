@@ -1,10 +1,15 @@
 use actix_web::{web::{self}, Responder};
 
-use crate::{helpers::{response::response_json, parse::convert_vec_to_values}, structs::{application_struct::*, main_struct::*}};
+use crate::{
+  models::application_model::*,
+  schemas::application_schema::*,
+  structs::main_struct::AppState,
+  helpers::{response::response_json, parse::convert_vec_to_values}
+};
 
 #[doc = "Get all application"]
 pub async fn get_application(state: web::Data<AppState>) -> impl Responder {
-  let data = sqlx::query_as!(ApplicationStruct, "select * from applications")
+  let data = sqlx::query_as!(ApplicationModel, "select * from applications")
     .fetch_all(&state.db)
     .await
     .unwrap();
@@ -21,10 +26,10 @@ pub async fn get_application(state: web::Data<AppState>) -> impl Responder {
 #[doc = "Get user application"]
 pub async fn get_my_application(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
   let id = path.into_inner();
-  let data = sqlx::query_as!(DetailApplicationStruct,
-    "select applications.id, universities.id as univ_id, universities.name, universities.major, universities.image, applications.status from applications
-      join universities on applications.univ_id = universities.id where student_id = $1
-      order by universities.id desc"
+  let data = sqlx::query_as!(DetailApplicationModel,
+    "select app.id, univ.id as univ_id, univ.name, univ.major, univ.image, app.status from applications app
+      join universities univ on app.univ_id = univ.id where student_id = $1
+      order by univ.id desc"
     , id)
     .fetch_all(&state.db)
     .await
@@ -40,12 +45,12 @@ pub async fn get_my_application(state: web::Data<AppState>, path: web::Path<i32>
 }
 
 #[doc = "Add application"]
-pub async fn add_application(state: web::Data<AppState>, body: web::Json<ApplicationBodyStruct>) -> impl Responder {
+pub async fn add_application(state: web::Data<AppState>, body: web::Json<ApplicationSchema>) -> impl Responder {
   let major = body.major.to_owned();
   let status = body.status.to_owned();
   let univ_id = body.univ_id.to_owned();
   let student_id = body.student_id.to_owned();
-  let schoolarship_id = body.schoolarship_id.to_owned();
+  let scholarship_id = body.scholarship_id.to_owned();
 
   match sqlx::query!("select major, quantity from universities where id = $1", univ_id)
     .fetch_optional(&state.db)
@@ -79,14 +84,14 @@ pub async fn add_application(state: web::Data<AppState>, body: web::Json<Applica
       )
     };
 
-  match sqlx::query!("select quantity from schoolarships where id = $1", schoolarship_id)
+  match sqlx::query!("select quantity from scholarships where id = $1", scholarship_id)
     .fetch_optional(&state.db)
     .await {
-      Ok(Some(schoolarship_data)) => {
-        if schoolarship_data.quantity == 0 {
+      Ok(Some(scholarship_data)) => {
+        if scholarship_data.quantity == 0 {
           return response_json(
             "failed".to_string(),
-            "Schoolarship quota is full".to_string(),
+            "Scholarship quota is full".to_string(),
             vec![]
           )
         } else {
@@ -95,7 +100,7 @@ pub async fn add_application(state: web::Data<AppState>, body: web::Json<Applica
       }
       Ok(None) => return response_json(
         "failed".to_string(),
-        "Schoolarship not found".to_string(),
+        "Scholarship not found".to_string(),
         vec![]
       ),
       Err(_) => return response_json(
@@ -121,20 +126,16 @@ pub async fn add_application(state: web::Data<AppState>, body: web::Json<Applica
     )
   }
   
-  let data = sqlx::query_as!(ApplicationStruct,
+  sqlx::query!("with updated_university as (update universities set quantity = quantity - 1 where id = $1 returning id)
+    update scholarships set quantity = quantity - 1 where univ_id in (select id from updated_university)", univ_id)
+    .execute(&state.db)
+    .await
+    .unwrap();
+
+  let data = sqlx::query_as!(ApplicationModel,
     "insert into applications (univ_id, student_id, status, major) values ($1, $2, $3, $4) returning *"
     , univ_id, student_id, status, major)
     .fetch_all(&state.db)
-    .await
-    .unwrap();
-
-  sqlx::query!("update universities set quantity = quantity - 1 where id = $1", univ_id)
-    .execute(&state.db)
-    .await
-    .unwrap();
-
-  sqlx::query!("update schoolarships set quantity = quantity - 1 where univ_id = $1", univ_id)
-    .execute(&state.db)
     .await
     .unwrap();
 

@@ -1,13 +1,22 @@
 use actix_web::{web::{self}, Responder};
 
-use crate::{helpers::{response::response_json, parse::convert_vec_to_values, validation::check_if_empty}, structs::{schoolarship_struct::*, main_struct::*}};
+use crate::{
+  models::scholarship_model::*,
+  schemas::scholarship_schema::*,
+  structs::main_struct::AppState,
+  helpers::{
+    response::response_json,
+    validation::check_if_empty,
+    parse::convert_vec_to_values
+  }
+};
 
-#[doc = "Get all schoolarship"]
-pub async fn get_schoolarship(state: web::Data<AppState>) -> impl Responder {
-  let data = sqlx::query_as!(DetailSchoolarshipStruct,
+#[doc = "Get all scholarship"]
+pub async fn get_scholarship(state: web::Data<AppState>) -> impl Responder {
+  let data = sqlx::query_as!(DetailScholarshipModel,
     "select s.id, s.name, s.description, s.quantity, s.requirement, u.id as univ_id,
       u.name as univ_name, u.alias as univ_alias, u.description as univ_description,
-      u.major as univ_major from schoolarships s join universities u on s.univ_id = u.id")
+      u.major as univ_major from scholarships s join universities u on s.univ_id = u.id")
     .fetch_all(&state.db)
     .await
     .unwrap();
@@ -16,13 +25,13 @@ pub async fn get_schoolarship(state: web::Data<AppState>) -> impl Responder {
 
   response_json(
     "success".to_string(),
-    "Successfully retrieved schoolarship".to_string(),
+    "Successfully retrieved scholarship".to_string(),
     result
   )
 }
 
-#[doc = "Add new schoolarship"]
-pub async fn add_schoolarship(state: web::Data<AppState>, body: web::Json<SchoolarshipBodyStruct>) -> impl Responder {
+#[doc = "Add new scholarship"]
+pub async fn add_scholarship(state: web::Data<AppState>, body: web::Json<ScholarshipSchema>) -> impl Responder {
   let name = body.name.to_owned();
   let major = body.major.to_owned();
   let univ_id = body.univ_id.to_owned();
@@ -38,22 +47,22 @@ pub async fn add_schoolarship(state: web::Data<AppState>, body: web::Json<School
     )
   }
 
-  let schoolarship_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from schoolarships where name = $1) as schoolarship_exists")
+  let scholarship_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from scholarships where name = $1) as scholarship_exists")
     .bind(name.clone())
     .fetch_one(&state.db)
     .await
     .unwrap_or(false);
 
-  if schoolarship_exists {
+  if scholarship_exists {
     return response_json(
       "failed".to_string(),
-      "Schoolarship already exists".to_string(),
+      "Scholarship already exists".to_string(),
       vec![]
     )
   }
 
-  let data = sqlx::query_as!(SchoolarshipStruct,
-    "insert into schoolarships (name, description, quantity, requirement, univ_id)
+  let data = sqlx::query_as!(ScholarshipModel,
+    "insert into scholarships (name, description, quantity, requirement, univ_id)
       values ($1, $2, $3, $4, $5) returning *",
     name, description, quantity, requirement, univ_id)
     .fetch_all(&state.db)
@@ -64,31 +73,31 @@ pub async fn add_schoolarship(state: web::Data<AppState>, body: web::Json<School
 
   response_json(
     "success".to_string(),
-    "Successfully added schoolarship".to_string(),
+    "Successfully added scholarship".to_string(),
     result
   )
 }
 
-#[doc = "Find schoolarship by id"]
-pub async fn find_schoolarship(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
+#[doc = "Find scholarship by id"]
+pub async fn find_scholarship(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
   let id = path.into_inner();
 
-  match sqlx::query_as!(SchoolarshipStruct, "select * from schoolarships where id = $1", id)
+  match sqlx::query_as!(ScholarshipModel, "select * from scholarships where id = $1", id)
     .fetch_optional(&state.db)
     .await {
-      Ok(Some(schoolarship_data)) => {
-        let result = convert_vec_to_values(vec![schoolarship_data]);
+      Ok(Some(scholarship_data)) => {
+        let result = convert_vec_to_values(vec![scholarship_data]);
 
         return response_json(
           "success".to_string(),
-          "Successfully retrieved schoolarship".to_string(),
+          "Successfully retrieved scholarship".to_string(),
           result
         )
       },
       Ok(None) => {
         return response_json(
           "failed".to_string(),
-          "Schoolarship not found".to_string(),
+          "Scholarship not found".to_string(),
           vec![]
         )
       }
@@ -100,8 +109,8 @@ pub async fn find_schoolarship(state: web::Data<AppState>, path: web::Path<i32>)
     };
 }
 
-#[doc = "Update schoolarship by id"]
-pub async fn update_schoolarship(state: web::Data<AppState>, body: web::Json<SchoolarshipBodyStruct>, path: web::Path<i32>) -> impl Responder {
+#[doc = "Update scholarship by id"]
+pub async fn update_scholarship(state: web::Data<AppState>, body: web::Json<ScholarshipSchema>, path: web::Path<i32>) -> impl Responder {
   let id = path.into_inner();
   let name = body.name.to_owned();
   let major = body.major.to_owned();
@@ -118,22 +127,22 @@ pub async fn update_schoolarship(state: web::Data<AppState>, body: web::Json<Sch
     )
   }
 
-  let schoolarship_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from schoolarships where id = $1) as schoolarship_exists")
+  let scholarship_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from scholarships where id = $1) as scholarship_exists")
     .bind(id.clone())
     .fetch_one(&state.db)
     .await
     .unwrap_or(false);
 
-  if !schoolarship_exists {
+  if !scholarship_exists {
     return response_json(
       "failed".to_string(),
-      "Schoolarship not found".to_string(),
+      "Scholarship not found".to_string(),
       vec![]
     )
   }
 
-  let data = sqlx::query_as!(SchoolarshipStruct,
-    "update schoolarships set name = $1, description = $2, quantity = $3, requirement = $4, univ_id = $5 where id = $6 returning *",
+  let data = sqlx::query_as!(ScholarshipModel,
+    "update scholarships set name = $1, description = $2, quantity = $3, requirement = $4, univ_id = $5 where id = $6 returning *",
     name, description, quantity, requirement, univ_id, id)
     .fetch_all(&state.db)
     .await
@@ -143,29 +152,29 @@ pub async fn update_schoolarship(state: web::Data<AppState>, body: web::Json<Sch
 
   response_json(
     "success".to_string(),
-    "Successfully updated schoolarship".to_string(),
+    "Successfully updated scholarship".to_string(),
     result
   )
 }
 
-#[doc = "Delete schoolarship by id"]
-pub async fn delete_schoolarship(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
+#[doc = "Delete scholarship by id"]
+pub async fn delete_scholarship(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
   let id = path.into_inner();
-  let schoolarship_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from schoolarships where id = $1) as schoolarship_exists")
+  let scholarship_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from scholarships where id = $1) as scholarship_exists")
     .bind(id.clone())
     .fetch_one(&state.db)
     .await
     .unwrap_or(false);
 
-  if !schoolarship_exists {
+  if !scholarship_exists {
     return response_json(
       "failed".to_string(),
-      "Schoolarship not found".to_string(),
+      "Scholarship not found".to_string(),
       vec![]
     )
   }
 
-  let data = sqlx::query_as!(SchoolarshipStruct, "delete from schoolarships where id = $1 returning *", id)
+  let data = sqlx::query_as!(ScholarshipModel, "delete from scholarships where id = $1 returning *", id)
     .fetch_all(&state.db)
     .await
     .unwrap();
@@ -174,7 +183,7 @@ pub async fn delete_schoolarship(state: web::Data<AppState>, path: web::Path<i32
 
   response_json(
     "success".to_string(),
-    "Successfully deleted schoolarship".to_string(),
+    "Successfully deleted scholarship".to_string(),
     result
   )
 }

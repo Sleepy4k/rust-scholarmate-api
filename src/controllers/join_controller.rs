@@ -1,10 +1,19 @@
 use chrono::NaiveDate;
 use actix_web::{web::{self}, Responder};
 
-use crate::{helpers::{response::response_json, parse::convert_vec_to_values, validation::check_if_empty}, structs::{student_struct::*, main_struct::*}};
+use crate::{
+  models::student_model::*,
+  schemas::student_schema::*,
+  structs::main_struct::AppState,
+  helpers::{
+    response::response_json,
+    validation::check_if_empty,
+    parse::convert_vec_to_values
+  }
+};
 
 #[doc = "Add new student"]
-pub async fn post_join(state: web::Data<AppState>, body: web::Json<StudentBodyStruct>) -> impl Responder {
+pub async fn post_join(state: web::Data<AppState>, body: web::Json<StudentSchema>) -> impl Responder {
   let first_name = body.first_name.to_owned();
   let last_name = body.last_name.to_owned();
   let email = body.email.to_owned();
@@ -40,7 +49,7 @@ pub async fn post_join(state: web::Data<AppState>, body: web::Json<StudentBodySt
   }
 
   let dob = NaiveDate::parse_from_str(date_of_birth.as_str(), "%Y-%m-%d").unwrap();
-  let data = sqlx::query_as!(StudentStruct,
+  let data = sqlx::query_as!(StudentModel,
     "insert into students (first_name, last_name, email, phone, date_of_birth, region, register_number, toefl_score, ielts_score)
       values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning *",
     first_name, last_name, email, phone, dob, region, register_number, toefl_score, ielts_score)
@@ -58,7 +67,7 @@ pub async fn post_join(state: web::Data<AppState>, body: web::Json<StudentBodySt
 }
 
 #[doc = "Update student data"]
-pub async fn put_join(state: web::Data<AppState>, body: web::Json<StudentBodyStruct>, path: web::Path<i32>) -> impl Responder {
+pub async fn put_join(state: web::Data<AppState>, body: web::Json<StudentSchema>, path: web::Path<i32>) -> impl Responder {
   let id = path.into_inner();
   let first_name = body.first_name.to_owned();
   let last_name = body.last_name.to_owned();
@@ -93,7 +102,7 @@ pub async fn put_join(state: web::Data<AppState>, body: web::Json<StudentBodyStr
   }
 
   let dob = NaiveDate::parse_from_str(date_of_birth.as_str(), "%Y-%m-%d").unwrap();
-  let data = sqlx::query_as!(StudentStruct, 
+  let data = sqlx::query_as!(StudentModel, 
     "update students set first_name = $1, last_name = $2, email = $3, phone = $4, date_of_birth = $5,
       region = $6, register_number = $7, toefl_score = $8, ielts_score = $9 where id = $10 returning *",
     first_name, last_name, email, phone, dob, region, register_number, toefl_score, ielts_score, id)

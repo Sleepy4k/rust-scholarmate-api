@@ -2,10 +2,20 @@ use actix_web::{web::{self}, Responder};
 use std::{env, time::{SystemTime, UNIX_EPOCH}};
 use jsonwebtoken::{encode, Header, EncodingKey};
 
-use crate::{helpers::{response::{response_json, response_json_with_cookie}, parse::convert_vec_to_values, validation::check_if_empty, auth::*}, structs::{auth_struct::*, student_struct::StudentStruct, main_struct::*}};
+use crate::{
+  schemas::auth_schema::*,
+  models::{student_model::StudentModel, auth_model::*},
+  structs::{auth_struct::TokenStruct, main_struct::AppState},
+  helpers::{
+    auth::*,
+    validation::check_if_empty,
+    parse::convert_vec_to_values,
+    response::{response_json, response_json_with_cookie}
+  }
+};
 
 #[doc = "Verify user credentials and return token"]
-pub async fn login(state: web::Data<AppState>, body: web::Json<LoginStruct>) -> impl Responder {
+pub async fn login(state: web::Data<AppState>, body: web::Json<LoginSchema>) -> impl Responder {
   let email = body.email.to_owned();
   let password = body.password.to_owned();
 
@@ -61,16 +71,16 @@ pub async fn login(state: web::Data<AppState>, body: web::Json<LoginStruct>) -> 
   let key = EncodingKey::from_secret(jwt_secret.as_ref());
   let token = encode(&Header::default(), &token_value, &key).unwrap_or_else(|_| String::new());
 
-  let student = sqlx::query_as!(StudentStruct, "select * from students where email = $1", user.email.clone())
+  let student = sqlx::query_as!(StudentModel, "select * from students where email = $1", user.email.clone())
     .fetch_optional(&state.db)
     .await
     .unwrap();
 
   let detail_user = convert_vec_to_values(vec![
-    DetailUserStruct {
+    DetailUserModel {
       id: user.id,
       email: user.email,
-      role: user.role.clone(),
+      role: user.role,
       student: student,
     }
   ]);
@@ -86,7 +96,7 @@ pub async fn login(state: web::Data<AppState>, body: web::Json<LoginStruct>) -> 
 }
 
 #[doc = "Register new user"]
-pub async fn register(state: web::Data<AppState>, body: web::Json<RegisterStruct>) -> impl Responder {
+pub async fn register(state: web::Data<AppState>, body: web::Json<RegisterSchema>) -> impl Responder {
   let email = body.email.to_owned();
   let password = body.password.to_owned();
   let role = body.role.to_owned();
@@ -119,7 +129,7 @@ pub async fn register(state: web::Data<AppState>, body: web::Json<RegisterStruct
 
   let hashed_password = hash_password(password.as_str());
 
-  match sqlx::query_as!(UserStruct,
+  match sqlx::query_as!(UserModel,
     "insert into users (email, password, role) values ($1, $2, $3) returning id, email, role",
     email.to_owned(), hashed_password, role.to_owned()
   ).fetch_one(&state.db).await {
