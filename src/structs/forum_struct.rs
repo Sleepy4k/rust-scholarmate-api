@@ -1,7 +1,7 @@
-use serde::{Serialize};
+use serde::{Serialize, Deserialize};
 
 #[doc = "Forum struct"]
-#[derive(Debug, Serialize)]
+#[derive(Debug, Deserialize, Serialize)]
 pub struct ForumStruct {
   pub alias: String,
   pub message: String,
