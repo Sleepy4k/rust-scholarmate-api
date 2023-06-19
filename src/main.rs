@@ -1,10 +1,18 @@
 use std::env;
 use dotenv::dotenv;
-use actix_cors::Cors;
-use actix_web::{error, http::header, web::{Data, JsonConfig}, App, HttpResponse, HttpServer, middleware::{Logger, DefaultHeaders}};
-
-use actix_api::*;
 use serde_json::json;
+use actix_cors::Cors;
+use actix_web::{
+  App,
+  error,
+  HttpServer,
+  http::header,
+  HttpResponse,
+  web::{Data, JsonConfig},
+  middleware::{Logger, DefaultHeaders}
+};
+
+use scholarmate_api::*;
 
 extern crate argon2;
 
