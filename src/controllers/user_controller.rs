@@ -1,6 +1,6 @@
 use actix_web::{web, Responder};
 
-use crate::{AppState, helpers::{response::*, parse::*}, structs::auth_struct::*};
+use crate::{helpers::{response::response_json, parse::convert_vec_to_values}, structs::{auth_struct::UserStruct, main_struct::*}};
 
 #[doc = "Get all user"]
 pub async fn get_user(state: web::Data<AppState>) -> impl Responder {

@@ -1,7 +1,6 @@
-use serde_json::Value;
 use actix_web::{web::{self}, Responder};
 
-use crate::{AppState, helpers::{response::*, parse::*, validation::*}, structs::university_struct::*};
+use crate::{helpers::{response::response_json, parse::convert_vec_to_values, validation::check_if_empty}, structs::{university_struct::*, main_struct::*}};
 
 #[doc = "Get all university"]
 pub async fn get_university(state: web::Data<AppState>) -> impl Responder {
@@ -20,13 +19,13 @@ pub async fn get_university(state: web::Data<AppState>) -> impl Responder {
 }
 
 #[doc = "Add new university"]
-pub async fn add_university(state: web::Data<AppState>, body: web::Json<Value>) -> impl Responder {
-  let name = to_str(map_get("name", body.to_owned()));
-  let description = to_str(map_get("description", body.to_owned()));
-  let major = to_str(map_get("major", body.to_owned()));
-  let quantity = to_i32(map_get("quantity", body.to_owned()));
+pub async fn add_university(state: web::Data<AppState>, body: web::Json<UniversityBodyStruct>) -> impl Responder {
+  let name = body.name.to_owned();
+  let major = body.major.to_owned();
+  let quantity = body.quantity.to_owned();
+  let description = body.description.to_owned();
 
-  if check_if_empty(name.to_owned()) || check_if_empty(description.to_owned()) || check_if_empty(major.to_owned()) {
+  if check_if_empty(name.clone()) || check_if_empty(description.clone()) || check_if_empty(major.clone()) {
     return response_json(
       "failed".to_string(),
       "Please fill all fields".to_string(),
@@ -97,14 +96,14 @@ pub async fn find_university(state: web::Data<AppState>, path: web::Path<i32>) -
 }
 
 #[doc = "Update university by id"]
-pub async fn update_university(state: web::Data<AppState>, body: web::Json<Value>, path: web::Path<i32>) -> impl Responder {
+pub async fn update_university(state: web::Data<AppState>, body: web::Json<UniversityBodyStruct>, path: web::Path<i32>) -> impl Responder {
   let id = path.into_inner();
-  let name = to_str(map_get("name", body.to_owned()));
-  let description = to_str(map_get("description", body.to_owned()));
-  let major = to_str(map_get("major", body.to_owned()));
-  let quantity = to_i32(map_get("quantity", body.to_owned()));
+  let name = body.name.to_owned();
+  let major = body.major.to_owned();
+  let quantity = body.quantity.to_owned();
+  let description = body.description.to_owned();
 
-  if check_if_empty(name.to_owned()) || check_if_empty(description.to_owned()) || check_if_empty(major.to_owned()) {
+  if check_if_empty(name.clone()) || check_if_empty(description.clone()) || check_if_empty(major.clone()) {
     return response_json(
       "failed".to_string(),
       "Please fill all fields".to_string(),

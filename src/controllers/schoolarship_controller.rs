@@ -1,7 +1,6 @@
-use serde_json::Value;
 use actix_web::{web::{self}, Responder};
 
-use crate::{AppState, helpers::{response::*, parse::*, validation::*}, structs::schoolarship_struct::*};
+use crate::{helpers::{response::response_json, parse::convert_vec_to_values, validation::check_if_empty}, structs::{schoolarship_struct::*, main_struct::*}};
 
 #[doc = "Get all schoolarship"]
 pub async fn get_schoolarship(state: web::Data<AppState>) -> impl Responder {
@@ -23,13 +22,13 @@ pub async fn get_schoolarship(state: web::Data<AppState>) -> impl Responder {
 }
 
 #[doc = "Add new schoolarship"]
-pub async fn add_schoolarship(state: web::Data<AppState>, body: web::Json<Value>) -> impl Responder {
-  let name = to_str(map_get("name", body.to_owned()));
-  let description = to_str(map_get("description", body.to_owned()));
-  let major = to_str(map_get("major", body.to_owned()));
-  let quantity = to_i32(map_get("quantity", body.to_owned()));
-  let requirement = to_str(map_get("requirement", body.to_owned()));
-  let univ_id = to_i32(map_get("univ_id", body.to_owned()));
+pub async fn add_schoolarship(state: web::Data<AppState>, body: web::Json<SchoolarshipBodyStruct>) -> impl Responder {
+  let name = body.name.to_owned();
+  let major = body.major.to_owned();
+  let univ_id = body.univ_id.to_owned();
+  let quantity = body.quantity.to_owned();
+  let description = body.description.to_owned();
+  let requirement = body.requirement.to_owned();
 
   if check_if_empty(name.to_owned()) || check_if_empty(description.to_owned()) || check_if_empty(major.to_owned()) || check_if_empty(requirement.to_owned()) {
     return response_json(
@@ -102,14 +101,14 @@ pub async fn find_schoolarship(state: web::Data<AppState>, path: web::Path<i32>)
 }
 
 #[doc = "Update schoolarship by id"]
-pub async fn update_schoolarship(state: web::Data<AppState>, body: web::Json<Value>, path: web::Path<i32>) -> impl Responder {
+pub async fn update_schoolarship(state: web::Data<AppState>, body: web::Json<SchoolarshipBodyStruct>, path: web::Path<i32>) -> impl Responder {
   let id = path.into_inner();
-  let name = to_str(map_get("name", body.to_owned()));
-  let description = to_str(map_get("description", body.to_owned()));
-  let major = to_str(map_get("major", body.to_owned()));
-  let quantity = to_i32(map_get("quantity", body.to_owned()));
-  let requirement = to_str(map_get("requirement", body.to_owned()));
-  let univ_id = to_i32(map_get("univ_id", body.to_owned()));
+  let name = body.name.to_owned();
+  let major = body.major.to_owned();
+  let univ_id = body.univ_id.to_owned();
+  let quantity = body.quantity.to_owned();
+  let description = body.description.to_owned();
+  let requirement = body.requirement.to_owned();
 
   if check_if_empty(name.to_owned()) || check_if_empty(description.to_owned()) || check_if_empty(major.to_owned()) || check_if_empty(requirement.to_owned()) {
     return response_json(

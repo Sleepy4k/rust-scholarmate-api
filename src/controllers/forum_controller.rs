@@ -1,6 +1,6 @@
 use actix_web::{web::{self}, Responder};
 
-use crate::{AppState, helpers::{response::*, parse::*}, structs::forum_struct::*};
+use crate::{helpers::{response::response_json, parse::convert_vec_to_values}, structs::{forum_struct::ForumStruct, main_struct::*}};
 
 #[doc = "Get all forum"]
 pub async fn get_forum(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {

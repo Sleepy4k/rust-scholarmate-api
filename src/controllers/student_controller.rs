@@ -1,8 +1,7 @@
-use serde_json::Value;
 use chrono::NaiveDate;
 use actix_web::{web::{self}, Responder};
 
-use crate::{AppState, helpers::{response::*, parse::*, validation::*}, structs::student_struct::*};
+use crate::{helpers::{response::response_json, parse::convert_vec_to_values, validation::check_if_empty}, structs::{student_struct::*, main_struct::*}};
 
 #[doc = "Get all student"]
 pub async fn get_student(state: web::Data<AppState>) -> impl Responder {
@@ -21,16 +20,16 @@ pub async fn get_student(state: web::Data<AppState>) -> impl Responder {
 }
 
 #[doc = "Add new student"]
-pub async fn add_student(state: web::Data<AppState>, body: web::Json<Value>) -> impl Responder {
-  let first_name = to_str(map_get("first_name", body.to_owned()));
-  let last_name = to_str(map_get("last_name", body.to_owned()));
-  let email = to_str(map_get("email", body.to_owned()));
-  let phone = to_str(map_get("phone", body.to_owned()));
-  let date_of_birth = to_str(map_get("date_of_birth", body.to_owned()));
-  let region = to_str(map_get("region", body.to_owned()));
-  let register_number = to_str(map_get("register_number", body.to_owned()));
-  let toefl_score = to_i32(map_get("toefl_score", body.to_owned()));
-  let ielts_score = to_i32(map_get("ielts_score", body.to_owned()));
+pub async fn add_student(state: web::Data<AppState>, body: web::Json<StudentBodyStruct>) -> impl Responder {
+  let first_name = body.first_name.to_owned();
+  let last_name = body.last_name.to_owned();
+  let email = body.email.to_owned();
+  let phone = body.phone.to_owned();
+  let date_of_birth = body.date_of_birth.to_owned().to_string();
+  let region = body.region.to_owned();
+  let register_number = body.register_number.to_owned();
+  let toefl_score = body.toefl_score.to_owned();
+  let ielts_score = body.ielts_score.to_owned();
 
   if check_if_empty(first_name.to_owned()) || check_if_empty(last_name.to_owned()) || check_if_empty(email.to_owned()) || check_if_empty(phone.to_owned()) || check_if_empty(date_of_birth.to_owned()) || check_if_empty(region.to_owned()) {
     return response_json(
@@ -108,17 +107,17 @@ pub async fn find_student(state: web::Data<AppState>, path: web::Path<i32>) -> i
 }
 
 #[doc = "Update student by id"]
-pub async fn update_student(state: web::Data<AppState>, body: web::Json<Value>, path: web::Path<i32>) -> impl Responder {
+pub async fn update_student(state: web::Data<AppState>, body: web::Json<StudentBodyStruct>, path: web::Path<i32>) -> impl Responder {
   let id = path.into_inner();
-  let first_name = to_str(map_get("first_name", body.to_owned()));
-  let last_name = to_str(map_get("last_name", body.to_owned()));
-  let email = to_str(map_get("email", body.to_owned()));
-  let phone = to_str(map_get("phone", body.to_owned()));
-  let date_of_birth = to_str(map_get("date_of_birth", body.to_owned()));
-  let region = to_str(map_get("region", body.to_owned()));
-  let register_number = to_str(map_get("register_number", body.to_owned()));
-  let toefl_score = to_i32(map_get("toefl_score", body.to_owned()));
-  let ielts_score = to_i32(map_get("ielts_score", body.to_owned()));
+  let first_name = body.first_name.to_owned();
+  let last_name = body.last_name.to_owned();
+  let email = body.email.to_owned();
+  let phone = body.phone.to_owned();
+  let date_of_birth = body.date_of_birth.to_owned().to_string();
+  let region = body.region.to_owned();
+  let register_number = body.register_number.to_owned();
+  let toefl_score = body.toefl_score.to_owned();
+  let ielts_score = body.ielts_score.to_owned();
 
   if check_if_empty(first_name.to_owned()) || check_if_empty(last_name.to_owned()) || check_if_empty(email.to_owned()) || check_if_empty(phone.to_owned()) || check_if_empty(date_of_birth.to_owned()) || check_if_empty(region.to_owned()) {
     return response_json(

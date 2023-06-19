@@ -1,15 +1,13 @@
-use chrono::Local;
-use serde_json::Value;
 use actix_web::{web::{self}, Responder};
 use std::{env, time::{SystemTime, UNIX_EPOCH}};
 use jsonwebtoken::{encode, Header, EncodingKey};
 
-use crate::{AppState, helpers::{response::*, parse::*, validation::*, auth::*}, structs::{auth_struct::*, student_struct::*}};
+use crate::{helpers::{response::{response_json, response_json_with_cookie}, parse::convert_vec_to_values, validation::check_if_empty, auth::*}, structs::{auth_struct::*, student_struct::StudentStruct, main_struct::*}};
 
 #[doc = "Verify user credentials and return token"]
-pub async fn login(state: web::Data<AppState>, body: web::Json<Value>) -> impl Responder {
-  let email = to_str(map_get("email", body.to_owned()));
-  let password = to_str(map_get("password", body.to_owned()));
+pub async fn login(state: web::Data<AppState>, body: web::Json<LoginStruct>) -> impl Responder {
+  let email = body.email.to_owned();
+  let password = body.password.to_owned();
 
   if check_if_empty(email.to_owned()) || check_if_empty(password.to_owned()) {
     return response_json(
@@ -19,7 +17,6 @@ pub async fn login(state: web::Data<AppState>, body: web::Json<Value>) -> impl R
     )
   }
 
-  let start_time = Local::now().timestamp();
   let user = match sqlx::query!("select * from users where email = $1 limit 1", email)
     .fetch_optional(&state.db)
     .await {
@@ -78,11 +75,6 @@ pub async fn login(state: web::Data<AppState>, body: web::Json<Value>) -> impl R
     }
   ]);
 
-  let end_time = Local::now().timestamp();
-  let duration = modified_duration(start_time, end_time);
-
-  println!("{}", duration);
-
   response_json_with_cookie(
     "success".to_string(),
     "Successfully logged in".to_string(),
@@ -94,10 +86,10 @@ pub async fn login(state: web::Data<AppState>, body: web::Json<Value>) -> impl R
 }
 
 #[doc = "Register new user"]
-pub async fn register(state: web::Data<AppState>, body: web::Json<Value>) -> impl Responder {
-  let email = to_str(map_get("email", body.to_owned()));
-  let password = to_str(map_get("password", body.to_owned()));
-  let role = to_str(map_get("role", body.to_owned()));
+pub async fn register(state: web::Data<AppState>, body: web::Json<RegisterStruct>) -> impl Responder {
+  let email = body.email.to_owned();
+  let password = body.password.to_owned();
+  let role = body.role.to_owned();
 
   if check_if_empty(email.to_owned()) || check_if_empty(password.to_owned()) || check_if_empty(role.to_owned()) {
     return response_json(
@@ -106,8 +98,6 @@ pub async fn register(state: web::Data<AppState>, body: web::Json<Value>) -> imp
       vec![]
     )
   }
-
-  let start_time = Local::now().timestamp();
 
   match sqlx::query!("select id from users where email = $1", email.to_owned())
     .fetch_optional(&state.db)
@@ -136,29 +126,17 @@ pub async fn register(state: web::Data<AppState>, body: web::Json<Value>) -> imp
     Ok(data) => {
       let detail_user = convert_vec_to_values(vec![data]);
 
-      let end_time = Local::now().timestamp();
-      let duration = modified_duration(start_time, end_time);
-  
-      println!("{}", duration);
-  
       response_json(
         "success".to_string(),
         "Successfully registered".to_string(),
         detail_user
       )
     },
-    Err(_) => {
-      let end_time = Local::now().timestamp();
-      let duration = modified_duration(start_time, end_time);
-  
-      println!("{}", duration);
-  
-      response_json(
-        "error".to_string(),
-        "Something went wrong".to_string(),
-        vec![]
-      )
-    }
+    Err(_) => response_json(
+      "error".to_string(),
+      "Something went wrong".to_string(),
+      vec![]
+    )
   }
 }
 

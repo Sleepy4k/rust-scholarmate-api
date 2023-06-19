@@ -1,7 +1,6 @@
-use serde_json::Value;
 use actix_web::{web::{self}, Responder};
 
-use crate::{AppState, helpers::{response::*, parse::*}, structs::application_struct::*};
+use crate::{helpers::{response::response_json, parse::convert_vec_to_values}, structs::{application_struct::*, main_struct::*}};
 
 #[doc = "Get all application"]
 pub async fn get_application(state: web::Data<AppState>) -> impl Responder {
@@ -41,12 +40,12 @@ pub async fn get_my_application(state: web::Data<AppState>, path: web::Path<i32>
 }
 
 #[doc = "Add application"]
-pub async fn add_application(state: web::Data<AppState>, body: web::Json<Value>) -> impl Responder {
-  let schoolarship_id = to_i32(map_get("schoolarship_id", body.to_owned()));
-  let univ_id = to_i32(map_get("univ_id", body.to_owned()));
-  let student_id = to_i32(map_get("student_id", body.to_owned()));
-  let status = to_str(map_get("status", body.to_owned()));
-  let major = to_str(map_get("major", body.to_owned()));
+pub async fn add_application(state: web::Data<AppState>, body: web::Json<ApplicationBodyStruct>) -> impl Responder {
+  let major = body.major.to_owned();
+  let status = body.status.to_owned();
+  let univ_id = body.univ_id.to_owned();
+  let student_id = body.student_id.to_owned();
+  let schoolarship_id = body.schoolarship_id.to_owned();
 
   match sqlx::query!("select major, quantity from universities where id = $1", univ_id)
     .fetch_optional(&state.db)

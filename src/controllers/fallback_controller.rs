@@ -1,7 +1,7 @@
 use serde_json::json;
 use actix_web::{HttpRequest, Responder};
 
-use crate::helpers::response::*;
+use crate::helpers::response::response_json;
 
 #[doc = "Default route for all routes that are not defined"]
 pub async fn fallback(request: HttpRequest) -> impl Responder {
