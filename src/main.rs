@@ -4,15 +4,16 @@ use actix_cors::Cors;
 use actix_web::{error, http::header, web::{Data, JsonConfig}, App, HttpResponse, HttpServer, middleware::{Logger, DefaultHeaders}};
 
 use actix_api::*;
+use serde_json::json;
 
 extern crate argon2;
 
-#[actix_web::main]
+#[tokio::main]
 async fn main() -> anyhow::Result<()> {
   dotenv().ok();
 
   if env::var("RUST_LOG").is_err() {
-    env::set_var("RUST_LOG", "actix_api=debug,actix_web=info");
+    env::set_var("RUST_LOG", "actix_web=info");
   }
 
   env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
@@ -36,17 +37,23 @@ async fn main() -> anyhow::Result<()> {
   let _ = HttpServer::new(move || {
     let cors = Cors::default()
       .allow_any_origin()
-      .allowed_methods(vec!["GET", "POST", "PUT", "PATCH", "POST", "DELETE", "OPTIONS"])
-      .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT, header::CONTENT_TYPE, header::ACCESS_CONTROL_ALLOW_ORIGIN, header::ACCESS_CONTROL_ALLOW_HEADERS, header::ACCESS_CONTROL_ALLOW_METHODS, header::ACCESS_CONTROL_ALLOW_CREDENTIALS])
+      .allowed_methods(vec!["GET", "POST", "PUT", "PATCH", "DELETE"])
+      .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT, header::CONTENT_TYPE])
       .supports_credentials()
       .max_age(604800);
 
     let json_config = JsonConfig::default()
       .limit(104857600)
       .error_handler(|err, _req| {
+        let message = err.to_string();
+        let response = json!({
+          "status": "error",
+          "message": message
+        });
+
         error::InternalError::from_response(
           err,
-          HttpResponse::Conflict().finish(),
+          HttpResponse::InternalServerError().json(response),
         )
         .into()
       });

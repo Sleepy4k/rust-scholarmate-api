@@ -2,8 +2,8 @@ use actix_web::web::{self};
 
 use crate::controllers::*;
 
-pub fn config(conf: &mut web::ServiceConfig) {
-  conf
+pub fn config(cfg: &mut web::ServiceConfig) {
+  cfg
     // welcome route
     .route("/", web::route().to(welcome))
 
