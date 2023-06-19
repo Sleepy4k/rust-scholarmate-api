@@ -1,5 +1,5 @@
 [package]
-name = "actix_api"
+name = "scholarmate_api"
 version = "1.0.0"
 edition = "2021"
 
