@@ -19,12 +19,12 @@ pub fn config(cfg: &mut web::ServiceConfig) {
     .route("/university/{id}", web::put().to(update_university))
     .route("/university/{id}", web::delete().to(delete_university))
 
-    // schoolarship route
-    .route("/schoolarship", web::get().to(get_schoolarship))
-    .route("/schoolarship", web::post().to(add_schoolarship))
-    .route("/schoolarship/{id}", web::get().to(find_schoolarship))
-    .route("/schoolarship/{id}", web::put().to(update_schoolarship))
-    .route("/schoolarship/{id}", web::delete().to(delete_schoolarship))
+    // scholarship route
+    .route("/scholarship", web::get().to(get_scholarship))
+    .route("/scholarship", web::post().to(add_scholarship))
+    .route("/scholarship/{id}", web::get().to(find_scholarship))
+    .route("/scholarship/{id}", web::put().to(update_scholarship))
+    .route("/scholarship/{id}", web::delete().to(delete_scholarship))
 
     // student route
     .route("/student", web::get().to(get_student))
