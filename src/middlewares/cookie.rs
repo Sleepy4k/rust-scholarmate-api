@@ -70,7 +70,7 @@ where
               "/forum".to_owned(),
               "/student".to_owned(),
               "/university".to_owned(),
-              "/schoolarship".to_owned(),
+              "/scholarship".to_owned(),
             ].into_iter().collect();
 
             let whitelist_routes = Arc::new(whitelist_routes);
