@@ -1,4 +1,4 @@
-use std::env;
+use std::{env, process};
 use async_once::AsyncOnce;
 use lazy_static::lazy_static;
 use sqlx::postgres::{PgPool, PgPoolOptions};
@@ -18,11 +18,19 @@ pub async fn open_postgres() -> PgPool {
   
   println!("database connect to {}", database_url);
 
-  let pool = PgPoolOptions::new()
+  let pool = match PgPoolOptions::new()
     .max_connections(10)
     .connect(&database_url)
-    .await
-    .expect("Can't connect to database");
+    .await {
+      Ok(pool) => {
+        println!("Connection to the database is successful!");
+        pool
+      },
+      Err(err) => {
+        println!("Failed to connect to the database: {:?}", err);
+        process::exit(1);
+      }
+    };
 
   pool
 }
