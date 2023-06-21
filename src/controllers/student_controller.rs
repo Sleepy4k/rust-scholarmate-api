@@ -1,10 +1,12 @@
-use chrono::NaiveDate;
 use actix_web::{web::{self}, Responder};
 
 use crate::{
-  models::student_model::*,
   schemas::student_schema::*,
   structs::main_struct::AppState,
+  repositories::{
+    student_repository::*,
+    main_repository::check_data
+  },
   helpers::{
     response::response_json,
     validation::check_if_empty,
@@ -14,17 +16,12 @@ use crate::{
 
 #[doc = "Get all student"]
 pub async fn get_student(state: web::Data<AppState>) -> impl Responder {
-  let data = sqlx::query_as!(StudentModel, "select * from students")
-    .fetch_all(&state.db)
-    .await
-    .unwrap();
-
-  let result = convert_vec_to_values(data);
+  let data = fetch_student_data(state.db.to_owned()).await;
 
   response_json(
     "success".to_string(),
     "Successfully retrieved student".to_string(),
-    result
+    data
   )
 }
 
@@ -34,13 +31,22 @@ pub async fn add_student(state: web::Data<AppState>, body: web::Json<StudentSche
   let last_name = body.last_name.to_owned();
   let email = body.email.to_owned();
   let phone = body.phone.to_owned();
-  let date_of_birth = body.date_of_birth.to_owned().to_string();
+  let date_of_birth = body.date_of_birth.to_owned();
   let region = body.region.to_owned();
   let register_number = body.register_number.to_owned();
   let toefl_score = body.toefl_score.to_owned();
   let ielts_score = body.ielts_score.to_owned();
 
-  if check_if_empty(first_name.to_owned()) || check_if_empty(last_name.to_owned()) || check_if_empty(email.to_owned()) || check_if_empty(phone.to_owned()) || check_if_empty(date_of_birth.to_owned()) || check_if_empty(region.to_owned()) {
+  if check_if_empty(first_name.to_owned())
+    || check_if_empty(last_name.to_owned())
+    || check_if_empty(email.to_owned())
+    || check_if_empty(phone.to_owned())
+    || check_if_empty(date_of_birth.to_owned().to_string())
+    || check_if_empty(region.to_owned())
+    || check_if_empty(register_number.to_owned())
+    || check_if_empty(toefl_score.to_owned().to_string())
+    || check_if_empty(ielts_score.to_owned().to_string())
+  {
     return response_json(
       "failed".to_string(),
       "Please fill all fields".to_string(),
@@ -48,37 +54,23 @@ pub async fn add_student(state: web::Data<AppState>, body: web::Json<StudentSche
     )
   }
 
-  let student_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from students where email = $1 or phone = $2 or register_number = $3) as student_exists")
-    .bind(email.clone())
-    .bind(phone.clone())
-    .bind(register_number.clone())
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(false);
+  let query_str = format!("select 1 from students where email = {} or phone = {} or register_number = {}", email, phone, register_number);
+  let student_exist = check_data(state.db.clone(), query_str.as_str()).await;
 
-  if student_exists {
+  if student_exist {
     return response_json(
       "failed".to_string(),
-      "Student already exists".to_string(),
+      "Student already exist".to_string(),
       vec![]
     )
   }
 
-  let dob = NaiveDate::parse_from_str(date_of_birth.as_str(), "%Y-%m-%d").unwrap();
-  let data = sqlx::query_as!(StudentModel,
-    "insert into students (first_name, last_name, email, phone, date_of_birth, region, register_number, toefl_score, ielts_score)
-      values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning *",
-    first_name, last_name, email, phone, dob, region, register_number, toefl_score, ielts_score)
-    .fetch_all(&state.db)
-    .await
-    .unwrap();
-
-  let result = convert_vec_to_values(data);
+  let data = insert_student_data(state.db.clone(), body.into_inner()).await;
 
   response_json(
     "success".to_string(),
     "Successfully added student".to_string(),
-    result
+    data
   )
 }
 
@@ -86,33 +78,25 @@ pub async fn add_student(state: web::Data<AppState>, body: web::Json<StudentSche
 pub async fn find_student(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
   let id = path.into_inner();
 
-  match sqlx::query_as!(StudentModel, "select * from students where id = $1", id)
-    .fetch_optional(&state.db)
-    .await {
-      Ok(Some(student_data)) => {
-        let result = convert_vec_to_values(vec![student_data]);
+  match fetch_student_data_by_id(state.db.to_owned(), id).await {
+    Some(student_data) => {
+      let convert_to_vec = vec![student_data];
+      let data = convert_vec_to_values(convert_to_vec);
 
-        return response_json(
-          "success".to_string(),
-          "Successfully retrieved student".to_string(),
-          result
-        )
-      },
-      Ok(None) => {
-        return response_json(
-          "failed".to_string(),
-          "Student not found".to_string(),
-          vec![]
-        )
-      },
-      Err(_) => {
-        return response_json(
-          "failed".to_string(),
-          "Student not found".to_string(),
-          vec![]
-        )
-      }
-    };
+      return response_json(
+        "success".to_string(),
+        "Successfully retrieved student".to_string(),
+        data
+      )
+    },
+    None => {
+      return response_json(
+        "failed".to_string(),
+        "Student not found".to_string(),
+        vec![]
+      )
+    }
+  };
 }
 
 #[doc = "Update student by id"]
@@ -122,13 +106,22 @@ pub async fn update_student(state: web::Data<AppState>, body: web::Json<StudentS
   let last_name = body.last_name.to_owned();
   let email = body.email.to_owned();
   let phone = body.phone.to_owned();
-  let date_of_birth = body.date_of_birth.to_owned().to_string();
+  let date_of_birth = body.date_of_birth.to_owned();
   let region = body.region.to_owned();
   let register_number = body.register_number.to_owned();
   let toefl_score = body.toefl_score.to_owned();
   let ielts_score = body.ielts_score.to_owned();
 
-  if check_if_empty(first_name.to_owned()) || check_if_empty(last_name.to_owned()) || check_if_empty(email.to_owned()) || check_if_empty(phone.to_owned()) || check_if_empty(date_of_birth.to_owned()) || check_if_empty(region.to_owned()) {
+  if check_if_empty(first_name.to_owned())
+    || check_if_empty(last_name.to_owned())
+    || check_if_empty(email.to_owned())
+    || check_if_empty(phone.to_owned())
+    || check_if_empty(date_of_birth.to_owned().to_string())
+    || check_if_empty(region.to_owned())
+    || check_if_empty(register_number.to_owned())
+    || check_if_empty(toefl_score.to_owned().to_string())
+    || check_if_empty(ielts_score.to_owned().to_string())
+  {
     return response_json(
       "failed".to_string(),
       "Please fill all fields".to_string(),
@@ -136,13 +129,10 @@ pub async fn update_student(state: web::Data<AppState>, body: web::Json<StudentS
     )
   }
 
-  let student_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from students where id = $1) as univ_exists")
-    .bind(id.clone())
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(false);
+  let query_str = format!("select 1 from students where id = {}", id);
+  let student_exist = check_data(state.db.clone(), query_str.as_str()).await;
 
-  if !student_exists {
+  if !student_exist {
     return response_json(
       "failed".to_string(),
       "Student not found".to_string(),
@@ -150,73 +140,49 @@ pub async fn update_student(state: web::Data<AppState>, body: web::Json<StudentS
     )
   }
 
-  match sqlx::query!("select id from students where email = $1 or phone = $2 or register_number = $3 limit 1", email.clone(), phone.clone(), register_number.clone())
-    .fetch_optional(&state.db)
-    .await {
-      Ok(Some(student_data)) => {
-        if student_data.id != id {
-          return response_json(
-            "failed".to_string(),
-            "Student already exists".to_string(),
-            vec![]
-          )
-        } else {
-          ()
-        }
+  match fetch_student_data_by_exists_column(state.db.clone(), email, phone, register_number).await {
+    Some(student_data) => {
+      if student_data.id != id {
+        return response_json(
+          "failed".to_string(),
+          "Student already exists".to_string(),
+          vec![]
+        )
+      } else {
+        ()
       }
-      Ok(None) => (),
-      Err(_) => return response_json(
-        "error".to_string(),
-        "Something went wrong".to_string(),
-        vec![]
-      )
-    };
+    },
+    None => ()
+  };
 
-  let dob = NaiveDate::parse_from_str(date_of_birth.as_str(), "%Y-%m-%d").unwrap();
-  let data = sqlx::query_as!(StudentModel,
-    "update students set first_name = $1, last_name = $2, email = $3, phone = $4, date_of_birth = $5,
-      region = $6, register_number = $7, toefl_score = $8, ielts_score = $9 where id = $10 returning *",
-    first_name, last_name, email, phone, dob, region, register_number, toefl_score, ielts_score, id)
-    .fetch_all(&state.db)
-    .await
-    .unwrap();
-
-  let result = convert_vec_to_values(data);
+  let data = update_student_data_by_id(state.db.clone(), id, body.into_inner()).await;
 
   response_json(
     "success".to_string(),
     "Successfully updated student".to_string(),
-    result
+    data
   )
 }
 
 #[doc = "Delete student by id"]
 pub async fn delete_student(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
   let id = path.into_inner();
-  let student_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from students where id = $1) as student_exists")
-    .bind(id.clone())
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(false);
+  let query_str = format!("select 1 from students where id = {}", id);
+  let student_exist = check_data(state.db.clone(), query_str.as_str()).await;
 
-  if !student_exists {
+  if !student_exist {
     return response_json(
       "failed".to_string(),
-      "University not found".to_string(),
+      "Student not found".to_string(),
       vec![]
     )
   }
 
-  let data = sqlx::query_as!(StudentModel, "delete from students where id = $1 returning *", id)
-    .fetch_all(&state.db)
-    .await
-    .unwrap();
-
-  let result = convert_vec_to_values(data);
+  let data = delete_student_data_by_id(state.db.clone(), id).await;
 
   response_json(
     "success".to_string(),
     "Successfully deleted student".to_string(),
-    result
+    data
   )
 }

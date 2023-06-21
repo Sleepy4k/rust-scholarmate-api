@@ -4,6 +4,7 @@ use jsonwebtoken::{encode, Header, EncodingKey};
 
 use crate::{
   schemas::auth_schema::*,
+  repositories::auth_repository::insert_user_data,
   models::{student_model::StudentModel, auth_model::*},
   structs::{auth_struct::TokenStruct, main_struct::AppState},
   helpers::{
@@ -129,25 +130,19 @@ pub async fn register(state: web::Data<AppState>, body: web::Json<RegisterSchema
 
   let hashed_password = hash_password(password.as_str());
 
-  match sqlx::query_as!(UserModel,
-    "insert into users (email, password, role) values ($1, $2, $3) returning id, email, role",
-    email.to_owned(), hashed_password, role.to_owned()
-  ).fetch_one(&state.db).await {
-    Ok(data) => {
-      let detail_user = convert_vec_to_values(vec![data]);
+  let user_data = RegisterSchema {
+    email: email.to_owned(),
+    password: hashed_password.to_owned(),
+    role: role.to_owned(),
+  };
 
-      response_json(
-        "success".to_string(),
-        "Successfully registered".to_string(),
-        detail_user
-      )
-    },
-    Err(_) => response_json(
-      "error".to_string(),
-      "Something went wrong".to_string(),
-      vec![]
-    )
-  }
+  let data = insert_user_data(state.db.clone(), user_data).await;
+
+  response_json(
+    "success".to_string(),
+    "Successfully registered".to_string(),
+    data
+  )
 }
 
 #[doc = "Logout user"]

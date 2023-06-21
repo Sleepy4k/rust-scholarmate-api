@@ -1,9 +1,12 @@
 use actix_web::{web::{self}, Responder};
 
 use crate::{
-  models::scholarship_model::*,
   schemas::scholarship_schema::*,
   structs::main_struct::AppState,
+  repositories::{
+    scholarship_repository::*,
+    main_repository::check_data
+  },
   helpers::{
     response::response_json,
     validation::check_if_empty,
@@ -13,20 +16,12 @@ use crate::{
 
 #[doc = "Get all scholarship"]
 pub async fn get_scholarship(state: web::Data<AppState>) -> impl Responder {
-  let data = sqlx::query_as!(DetailScholarshipModel,
-    "select s.id, s.name, s.description, s.quantity, s.requirement, u.id as univ_id,
-      u.name as univ_name, u.alias as univ_alias, u.description as univ_description,
-      u.major as univ_major from scholarships s join universities u on s.univ_id = u.id")
-    .fetch_all(&state.db)
-    .await
-    .unwrap();
-
-  let result = convert_vec_to_values(data);
+  let data = fetch_scholarship_data(state.db.to_owned()).await;
 
   response_json(
     "success".to_string(),
     "Successfully retrieved scholarship".to_string(),
-    result
+    data
   )
 }
 
@@ -39,7 +34,13 @@ pub async fn add_scholarship(state: web::Data<AppState>, body: web::Json<Scholar
   let description = body.description.to_owned();
   let requirement = body.requirement.to_owned();
 
-  if check_if_empty(name.to_owned()) || check_if_empty(description.to_owned()) || check_if_empty(major.to_owned()) || check_if_empty(requirement.to_owned()) {
+  if check_if_empty(name.to_owned())
+    || check_if_empty(major.to_owned())
+    || check_if_empty(univ_id.to_owned().to_string())
+    || check_if_empty(quantity.to_owned().to_string())
+    || check_if_empty(description.to_owned())
+    || check_if_empty(requirement.to_owned())
+  {
     return response_json(
       "failed".to_string(),
       "Please fill all fields".to_string(),
@@ -47,11 +48,8 @@ pub async fn add_scholarship(state: web::Data<AppState>, body: web::Json<Scholar
     )
   }
 
-  let scholarship_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from scholarships where name = $1) as scholarship_exists")
-    .bind(name.clone())
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(false);
+  let query_str = format!("select 1 from scholarships where name = {}", name);
+  let scholarship_exists = check_data(state.db.clone(), query_str.as_str()).await;
 
   if scholarship_exists {
     return response_json(
@@ -61,20 +59,12 @@ pub async fn add_scholarship(state: web::Data<AppState>, body: web::Json<Scholar
     )
   }
 
-  let data = sqlx::query_as!(ScholarshipModel,
-    "insert into scholarships (name, description, quantity, requirement, univ_id)
-      values ($1, $2, $3, $4, $5) returning *",
-    name, description, quantity, requirement, univ_id)
-    .fetch_all(&state.db)
-    .await
-    .unwrap();
-
-  let result = convert_vec_to_values(data);
+  let data = insert_scholarship_data(state.db.to_owned(), body.into_inner()).await;
 
   response_json(
     "success".to_string(),
     "Successfully added scholarship".to_string(),
-    result
+    data
   )
 }
 
@@ -82,31 +72,25 @@ pub async fn add_scholarship(state: web::Data<AppState>, body: web::Json<Scholar
 pub async fn find_scholarship(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
   let id = path.into_inner();
 
-  match sqlx::query_as!(ScholarshipModel, "select * from scholarships where id = $1", id)
-    .fetch_optional(&state.db)
-    .await {
-      Ok(Some(scholarship_data)) => {
-        let result = convert_vec_to_values(vec![scholarship_data]);
+  match fetch_scholarship_data_by_id(state.db.to_owned(), id).await {
+    Some(scholarship_data) => {
+      let convert_to_vec = vec![scholarship_data];
+      let data = convert_vec_to_values(convert_to_vec);
 
-        return response_json(
-          "success".to_string(),
-          "Successfully retrieved scholarship".to_string(),
-          result
-        )
-      },
-      Ok(None) => {
-        return response_json(
-          "failed".to_string(),
-          "Scholarship not found".to_string(),
-          vec![]
-        )
-      }
-      Err(_) => return response_json(
-        "error".to_string(),
-        "Something went wrong".to_string(),
+      return response_json(
+        "success".to_string(),
+        "Successfully retrieved scholarship".to_string(),
+        data
+      )
+    },
+    None => {
+      return response_json(
+        "failed".to_string(),
+        "Scholarship not found".to_string(),
         vec![]
       )
-    };
+    }
+  }
 }
 
 #[doc = "Update scholarship by id"]
@@ -119,7 +103,13 @@ pub async fn update_scholarship(state: web::Data<AppState>, body: web::Json<Scho
   let description = body.description.to_owned();
   let requirement = body.requirement.to_owned();
 
-  if check_if_empty(name.to_owned()) || check_if_empty(description.to_owned()) || check_if_empty(major.to_owned()) || check_if_empty(requirement.to_owned()) {
+  if check_if_empty(name.to_owned())
+    || check_if_empty(major.to_owned())
+    || check_if_empty(univ_id.to_owned().to_string())
+    || check_if_empty(quantity.to_owned().to_string())
+    || check_if_empty(description.to_owned())
+    || check_if_empty(requirement.to_owned())
+  {
     return response_json(
       "failed".to_string(),
       "Please fill all fields".to_string(),
@@ -127,11 +117,8 @@ pub async fn update_scholarship(state: web::Data<AppState>, body: web::Json<Scho
     )
   }
 
-  let scholarship_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from scholarships where id = $1) as scholarship_exists")
-    .bind(id.clone())
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(false);
+  let query_str = format!("select 1 from scholarships where id = {}", id);
+  let scholarship_exists = check_data(state.db.clone(), query_str.as_str()).await;
 
   if !scholarship_exists {
     return response_json(
@@ -141,30 +128,20 @@ pub async fn update_scholarship(state: web::Data<AppState>, body: web::Json<Scho
     )
   }
 
-  let data = sqlx::query_as!(ScholarshipModel,
-    "update scholarships set name = $1, description = $2, quantity = $3, requirement = $4, univ_id = $5 where id = $6 returning *",
-    name, description, quantity, requirement, univ_id, id)
-    .fetch_all(&state.db)
-    .await
-    .unwrap();
-
-  let result = convert_vec_to_values(data);
+  let data = update_scholarship_data(state.db.to_owned(), id, body.into_inner()).await;
 
   response_json(
     "success".to_string(),
     "Successfully updated scholarship".to_string(),
-    result
+    data
   )
 }
 
 #[doc = "Delete scholarship by id"]
 pub async fn delete_scholarship(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
   let id = path.into_inner();
-  let scholarship_exists = sqlx::query_scalar::<_, bool>("select exists(select 1 from scholarships where id = $1) as scholarship_exists")
-    .bind(id.clone())
-    .fetch_one(&state.db)
-    .await
-    .unwrap_or(false);
+  let query_str = format!("select 1 from scholarships where id = {}", id);
+  let scholarship_exists = check_data(state.db.clone(), query_str.as_str()).await;
 
   if !scholarship_exists {
     return response_json(
@@ -174,16 +151,11 @@ pub async fn delete_scholarship(state: web::Data<AppState>, path: web::Path<i32>
     )
   }
 
-  let data = sqlx::query_as!(ScholarshipModel, "delete from scholarships where id = $1 returning *", id)
-    .fetch_all(&state.db)
-    .await
-    .unwrap();
-
-  let result = convert_vec_to_values(data);
+  let data = delete_scholarship_data(state.db.to_owned(), id).await;
 
   response_json(
     "success".to_string(),
     "Successfully deleted scholarship".to_string(),
-    result
+    data
   )
 }
