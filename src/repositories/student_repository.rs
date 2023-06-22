@@ -7,7 +7,7 @@ use crate::{
   schemas::student_schema::*,
   helpers::parse::convert_vec_to_values
 };
- 
+
 #[doc = "Fetch all student data"]
 pub async fn fetch_student_data(pool: Pool<Postgres>) -> Vec<Value> {
   let data = sqlx::query_as!(StudentModel, "select * from students")
