@@ -37,7 +37,7 @@ pub async fn open_postgres() -> PgPool {
 
 #[doc = "Connect to postgres database"]
 pub async fn connect_postgres() -> PgPool {
-  let db = POOL.get().await.to_owned();
+  let _db = POOL.get().await.to_owned();
 
-  db
+  _db
 }
