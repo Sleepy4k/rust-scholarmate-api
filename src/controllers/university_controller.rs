@@ -1,16 +1,17 @@
+use serde_json::Value;
+use validator::Validate;
 use actix_web::{web::{self}, Responder};
 
 use crate::{
   schemas::university_schema::*,
   structs::main_struct::AppState,
+  helpers::{
+    response::response_json,
+    parse::convert_vec_to_values
+  },
   repositories::{
     university_repository::*,
     main_repository::check_data
-  },
-  helpers::{
-    response::response_json,
-    validation::check_if_empty,
-    parse::convert_vec_to_values
   }
 };
 
@@ -27,24 +28,19 @@ pub async fn get_university(state: web::Data<AppState>) -> impl Responder {
 
 #[doc = "Add new university"]
 pub async fn add_university(state: web::Data<AppState>, body: web::Json<UniversitySchema>) -> impl Responder {
-  let name = body.name.to_owned();
-  let major = body.major.to_owned();
-  let quantity = body.quantity.to_owned();
-  let description = body.description.to_owned();
+  let validate_form = body.validate();
 
-  if check_if_empty(name.to_owned())
-  || check_if_empty(major.to_owned())
-  || check_if_empty(quantity.to_owned().to_string())
-  || check_if_empty(description.to_owned())
-  {
+  if validate_form.is_err() {
+    let data = Value::from(validate_form.err().unwrap().to_string());
+
     return response_json(
       "failed".to_string(),
       "Please fill all fields".to_string(),
-      vec![]
+      vec![data]
     )
   }
 
-  let query_str = format!("select 1 from universities where name = {} and major = {}", name, major);
+  let query_str = format!("select 1 from universities where name = '{}' and major = '{}'", body.name, body.major);
   let univ_exists = check_data(state.db.clone(), query_str.as_str()).await;
 
   if univ_exists {
@@ -90,24 +86,19 @@ pub async fn find_university(state: web::Data<AppState>, path: web::Path<i32>) -
 #[doc = "Update university by id"]
 pub async fn update_university(state: web::Data<AppState>, body: web::Json<UniversitySchema>, path: web::Path<i32>) -> impl Responder {
   let id = path.into_inner();
-  let name = body.name.to_owned();
-  let major = body.major.to_owned();
-  let quantity = body.quantity.to_owned();
-  let description = body.description.to_owned();
+  let validate_form = body.validate();
 
-  if check_if_empty(name.to_owned())
-  || check_if_empty(major.to_owned())
-  || check_if_empty(quantity.to_owned().to_string())
-  || check_if_empty(description.to_owned())
-  {
+  if validate_form.is_err() {
+    let data = Value::from(validate_form.err().unwrap().to_string());
+
     return response_json(
       "failed".to_string(),
       "Please fill all fields".to_string(),
-      vec![]
+      vec![data]
     )
   }
 
-  let query_str = format!("select 1 from universities where id = {}", id);
+  let query_str = format!("select 1 from universities where id = '{}'", id);
   let univ_exists = check_data(state.db.clone(), query_str.as_str()).await;
 
   if !univ_exists {
@@ -118,7 +109,7 @@ pub async fn update_university(state: web::Data<AppState>, body: web::Json<Unive
     )
   }
 
-  match fetch_university_data_by_exists_column(state.db.clone(), name, major).await {
+  match fetch_university_data_by_exists_column(state.db.clone(), body.name.to_owned(), body.major.to_owned()).await {
     Some(univ_data) => {
       if univ_data.id != id {
         return response_json(
@@ -145,7 +136,7 @@ pub async fn update_university(state: web::Data<AppState>, body: web::Json<Unive
 #[doc = "Delete university by id"]
 pub async fn delete_university(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
   let id = path.into_inner();
-  let query_str = format!("select 1 from universities where id = {}", id);
+  let query_str = format!("select 1 from universities where id = '{}'", id);
   let univ_exists = check_data(state.db.clone(), query_str.as_str()).await;
 
   if !univ_exists {
