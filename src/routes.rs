@@ -41,9 +41,9 @@ pub fn config(cfg: &mut web::ServiceConfig) {
     // forum route
     .route("/forum/{id}", web::get().to(get_forum))
 
-    // join route
-    .route("/join", web::post().to(post_join))
-    .route("/join/{id}", web::put().to(put_join))
+    // apply route
+    .route("/apply", web::post().to(post_apply))
+    .route("/apply/{id}", web::put().to(put_apply))
 
     // user route
     .route("/user", web::get().to(get_user))
