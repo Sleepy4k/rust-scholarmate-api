@@ -7,6 +7,15 @@ use crate::models::student_model::StudentModel;
 pub struct UserModel {
   pub id: i32,
   pub email: String,
+  pub password: String,
+  pub role: String,
+}
+
+#[doc = "Filtered user model"]
+#[derive(Debug, Deserialize, Serialize)]
+pub struct FilteredUserModel {
+  pub id: i32,
+  pub email: String,
   pub role: String,
 }
 
