@@ -22,6 +22,8 @@ chrono = { version = "0.4.22", features = ["serde"] }
 jsonwebtoken = "8.3.0"
 rust-argon2 = "1.0"
 futures-util = { version = "0.3.17", default-features = false, features = ["std"] }
+validator = { version = "0.16.1", features = ["derive"] }
+regex = "1.3"
 
 [dev-dependencies]
 pretty_assertions = "1"
