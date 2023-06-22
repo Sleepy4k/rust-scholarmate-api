@@ -22,7 +22,7 @@ pub async fn fetch_student_data(pool: Pool<Postgres>) -> Vec<Value> {
 
 #[doc = "Insert new student"]
 pub async fn insert_student_data(pool: Pool<Postgres>, body: StudentSchema) -> Vec<Value> {
-  let dob = NaiveDate::parse_from_str(body.date_of_birth.to_owned().to_string().as_str(), "%Y-%m-%d").unwrap();
+  let dob = NaiveDate::parse_from_str(body.date_of_birth.to_owned().as_str(), "%Y-%m-%d").unwrap();
   let data = sqlx::query_as!(StudentModel,
     "insert into students (first_name, last_name, email, phone, date_of_birth, region, register_number, toefl_score, ielts_score)
       values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning *",
@@ -58,7 +58,7 @@ pub async fn fetch_student_data_by_exists_column(pool: Pool<Postgres>, email: St
 
 #[doc = "Update student data by id"]
 pub async fn update_student_data_by_id(pool: Pool<Postgres>, id: i32, body: StudentSchema) -> Vec<Value> {
-  let dob = NaiveDate::parse_from_str(body.date_of_birth.to_owned().to_string().as_str(), "%Y-%m-%d").unwrap();
+  let dob = NaiveDate::parse_from_str(body.date_of_birth.to_owned().as_str(), "%Y-%m-%d").unwrap();
   let data = sqlx::query_as!(StudentModel,
     "update students set first_name = $1, last_name = $2, email = $3, phone = $4, date_of_birth = $5,
       region = $6, register_number = $7, toefl_score = $8, ielts_score = $9 where id = $10 returning *",
