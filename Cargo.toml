@@ -14,7 +14,7 @@ serde = "1.0"
 actix-web = "4.2.1"
 actix-cors = "0.6.2"
 dotenv = "0.15.0"
-sqlx = { version = "0.6.2", features = [ "runtime-actix-rustls", "postgres", "chrono" ] }
+sqlx = { version = "0.6.2", features = [ "runtime-actix-rustls", "postgres", "chrono", "offline" ] }
 env_logger = "0.10.0"
 lazy_static = "1.4"
 async_once = "0.2.6"
