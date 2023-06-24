@@ -1,3 +1,4 @@
 *
-!*.sql
+!*.up.sql
+!*.down.sql
 !.gitignore
