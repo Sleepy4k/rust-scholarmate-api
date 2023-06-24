@@ -1,7 +1,12 @@
 [package]
 name = "scholarmate_api"
 version = "1.0.0"
+authors = ["Sleepy4k <sarahpalastrin@gmail.com>"]
+description = "an API service made for the needs of scholarship registration for students to ease the burden of registering for lectures"
+readme = "README.md"
+repository = "https://github.com/Sleepy4k/rust-scholarmate-api"
 edition = "2021"
+default-run = "scholarmate_api"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
