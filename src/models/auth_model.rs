@@ -7,8 +7,8 @@ use crate::models::student_model::StudentModel;
 pub struct UserModel {
   pub id: i32,
   pub email: String,
-  pub password: String,
   pub role: String,
+  pub password: String,
 }
 
 #[doc = "Filtered user model"]
