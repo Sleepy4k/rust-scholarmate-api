@@ -51,10 +51,28 @@ Copy .env file
   copy .env.example .env
 ~~~
 
+Create database (if you already create one and make sure you already setting up .env file)
+
+~~~bash  
+  sqlx database drop
+~~~
+
+Create database (make sure you already setting up .env file)
+
+~~~bash  
+  sqlx database create
+~~~
+
 Migrate database (make sure you already setting up .env file)
 
 ~~~bash  
   sqlx migrate run
+~~~
+
+Build the server
+
+~~~bash  
+  cargo build
 ~~~
 
 Start the server
@@ -66,7 +84,7 @@ Start the server
 Start the server (for production)
 
 ~~~bash  
-  cargo run --release --bin scholarmate_api
+  cargo run --release
 ~~~
 
 ## Environment Variables  
@@ -83,6 +101,8 @@ To run this project, you will need to add the following environment variables to
 
 - [Rust Lang](https://doc.rust-lang.org/book/)
 - [Sqlx CLI](https://lib.rs/crates/sqlx-cli)
+- [Unit Test](https://doc.rust-lang.org/cargo/reference/cargo-targets.html#tests)
+- [Example](https://doc.rust-lang.org/cargo/reference/cargo-targets.html#examples)
 
 ## Feedback  
 
