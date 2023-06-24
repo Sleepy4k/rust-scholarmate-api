@@ -1,6 +1,6 @@
 use serde_json::Value;
 use validator::Validate;
-use actix_web::{web::{self}, Responder};
+use actix_web::{web, Responder};
 use std::{env, time::{SystemTime, UNIX_EPOCH}};
 use jsonwebtoken::{encode, Header, EncodingKey};
 

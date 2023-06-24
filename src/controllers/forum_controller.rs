@@ -1,4 +1,4 @@
-use actix_web::{web::{self}, Responder};
+use actix_web::{web, Responder};
 
 use crate::{
   structs::main_struct::AppState,

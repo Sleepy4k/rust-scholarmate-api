@@ -1,6 +1,6 @@
 use serde_json::Value;
 use validator::Validate;
-use actix_web::{web::{self}, Responder};
+use actix_web::{web, Responder};
 
 use crate::{
   schemas::application_schema::*,
