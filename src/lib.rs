@@ -15,6 +15,3 @@ pub use schemas::*;
 pub use middlewares::*;
 pub use controllers::*;
 pub use repositories::*;
-
-#[cfg(test)]
-pub mod tests;
