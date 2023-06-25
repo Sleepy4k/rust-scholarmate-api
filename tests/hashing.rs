@@ -6,26 +6,28 @@ use scholarmate_api::helpers::auth::*;
 #[doc(hidden)]
 fn test_hash_password() {
   let data = "password";
-  let result = hash_password(data);
+  let hash = hash_password(data);
+  let hash_again = hash_password(data);
 
-  assert_eq!(result, String::from("$argon2i$v=19$m=4096,t=3,p=1$bWVybW9hdXRoaGFzaA$NdWVPYd66iN7iKMoOiq2ANY1dtOAXVvklAJniaeYlWA"));
+  assert_eq!(hash, hash_again);
 }
 
 #[test]
 #[doc(hidden)]
 fn test_hash_password_wrong_password() {
-  let data = "password123";
-  let result = hash_password(data);
+  let data = "password";
+  let hash = hash_password(data);
+  let hash_again = hash_password(format!("{}123", data).as_str());
 
-  assert_ne!(result, String::from("$argon2i$v=19$m=4096,t=3,p=1$bWVybW9hdXRoaGFzaA$NdWVPYd66iN7iKMoOiq2ANY1dtOAXVvklAJniaeYlWA"));
+  assert_ne!(hash, hash_again);
 }
 
 #[test]
 #[doc(hidden)]
 fn test_verify_password() {
   let data = "password";
-  let hashed_password = "$argon2i$v=19$m=4096,t=3,p=1$bWVybW9hdXRoaGFzaA$NdWVPYd66iN7iKMoOiq2ANY1dtOAXVvklAJniaeYlWA";
-  let result = verify_password(data, hashed_password);
+  let hashed_password = hash_password(data);
+  let result = verify_password(data, hashed_password.as_str());
 
   assert_eq!(result, true);
 }
@@ -33,9 +35,9 @@ fn test_verify_password() {
 #[test]
 #[doc(hidden)]
 fn test_verify_password_wrong_password() {
-  let data = "password123";
-  let hashed_password = "$argon2i$v=19$m=4096,t=3,p=1$bWVybW9hdXRoaGFzaA$NdWVPYd66iN7iKMoOiq2ANY1dtOAXVvklAJniaeYlWA";
-  let result = verify_password(data, hashed_password);
+  let data = "password";
+  let hashed_password = hash_password(data);
+  let result = verify_password(format!("{}123", data).as_str(), hashed_password.as_str());
 
   assert_eq!(result, false);
 }

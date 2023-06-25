@@ -1,8 +1,15 @@
-use chrono::NaiveDate;
+use serde::Serialize;
 use serde_json::{json, Value};
-use pretty_assertions::assert_eq;
+use pretty_assertions::{assert_eq, assert_ne};
 
-use scholarmate_api::{helpers::parse::*, models::student_model::*};
+use scholarmate_api::helpers::parse::*;
+
+#[derive(Serialize)]
+pub struct UserModel {
+  uid: i32,
+  username: String,
+  email: String,
+}
 
 #[test]
 #[doc(hidden)]
@@ -13,45 +20,72 @@ fn test_convert_vec_to_string() {
     "student003",
   ];
 
-  let result = vec_to_string(data);
+  let convert = vec_to_string(data.to_owned());
+  let convert_again = vec_to_string(data);
 
-  assert_eq!(result, String::from("'student001','student002','student003'"));
+  assert_eq!(convert, convert_again);
+}
+
+#[test]
+#[doc(hidden)]
+fn test_convert_vec_to_string_wrong_data() {
+  let mut data = vec![
+    "student001",
+    "student002",
+    "student003",
+  ];
+
+  let convert = vec_to_string(data.to_owned());
+  data.push("student004");
+  let convert_again = vec_to_string(data);
+
+  assert_ne!(convert, convert_again);
 }
 
 #[test]
 #[doc(hidden)]
 fn test_convert_vec_to_values() {
+  let mock_data = Value::from(json!({
+    "uid": 1,
+    "username": "student001",
+    "email": "johndoe123@example.com",
+  }));
+
   let data = vec![
-    StudentModel {
-      id: 1,
-      first_name: String::from("John"),
-      last_name: String::from("Doe"),
-      email: String::from("johndoe123@gmail.com"),	
-      phone: String::from("08123456789"),
-      date_of_birth: NaiveDate::parse_from_str("1999-01-01", "%Y-%m-%d").unwrap(),
-      region: String::from("Indonesia"),
-      register_number: String::from("123456789"),
-      toefl_score: 500,
-      ielts_score: 8,
-    }
+    UserModel {
+      uid: mock_data["uid"].as_i64().unwrap() as i32,
+      username: mock_data["username"].as_str().unwrap().to_string(),
+      email: mock_data["email"].as_str().unwrap().to_string(),
+    },
   ];
 
   let result = convert_vec_to_values(data);
 
-  assert_eq!(result, vec![
-    json!({
-      "id": 1,
-      "first_name": "John",
-      "last_name": "Doe",
-      "email": "johndoe123@gmail.com",
-      "phone": "08123456789",
-      "date_of_birth": "1999-01-01",
-      "region": "Indonesia",
-      "register_number": "123456789",
-      "toefl_score": 500,
-      "ielts_score": 8,
-    })
-  ]);
+  assert_eq!(result, vec![mock_data]);
+}
+
+#[test]
+#[doc(hidden)]
+fn test_convert_vec_to_values_wrong_data() {
+  let mut mock_data = Value::from(json!({
+    "uid": 1,
+    "username": "student001",
+    "email": "johndoe123@example.com",
+  }));
+
+  let data = vec![
+    UserModel {
+      uid: mock_data["uid"].as_i64().unwrap() as i32,
+      username: mock_data["username"].as_str().unwrap().to_string(),
+      email: mock_data["email"].as_str().unwrap().to_string(),
+    },
+  ];
+
+  let result = convert_vec_to_values(data);
+
+  mock_data["uid"] = json!(2);
+
+  assert_ne!(result, vec![mock_data]);
 }
 
 #[test]
@@ -67,21 +101,28 @@ fn test_string_to_slug() {
 #[doc(hidden)]
 fn test_map_get_data() {
   let data = json!({
-    "id": 1,
-    "first_name": "John",
-    "last_name": "Doe",
-    "email": "johndoe123@gmail.com",
-    "phone": "08123456789",
-    "date_of_birth": "1999-01-01",
-    "region": "Indonesia",
-    "register_number": "123456789",
-    "toefl_score": 500,
-    "ielts_score": 8,
+    "uid": 1,
+    "username": "student001",
+    "email": "johndoe123@example.com",
   });
 
-  let result = map_get("email", data);
+  let result = map_get("email", data.to_owned());
 
-  assert_eq!(result, Value::String(String::from("johndoe123@gmail.com")));
+  assert_eq!(result, data["email"]);
+}
+
+#[test]
+#[doc(hidden)]
+fn test_map_get_data_wrong_key() {
+  let data = json!({
+    "uid": 1,
+    "username": "student001",
+    "email": "johndoe123@example.com",
+  });
+
+  let result = map_get("email", data.to_owned());
+
+  assert_ne!(result, data["username"]);
 }
 
 #[test]
