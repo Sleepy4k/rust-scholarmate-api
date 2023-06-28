@@ -1,14 +1,7 @@
-use time::Duration;
-use serde::Serialize;
 use serde_json::Value;
-use actix_web::{HttpResponse, http::StatusCode, cookie::{Cookie, SameSite}};
+use actix_web::{HttpResponse, http::StatusCode};
 
-#[derive(Serialize, Debug)]
-pub struct ResponseStruct {
-  status: String,
-  message: String,
-  data: Vec<Value>,
-}
+use crate::structs::response_struct::*;
 
 #[doc = "Set status code for response"]
 fn setup_code(status: String) -> StatusCode {
@@ -41,8 +34,8 @@ pub fn response_json(status: String, message: String, data: Vec<Value>) -> HttpR
 
   // set response body
   let body = ResponseStruct {
-    status: status.to_string(),
-    message: message.to_string(),
+    status,
+    message,
     data,
   };
 
@@ -53,42 +46,20 @@ pub fn response_json(status: String, message: String, data: Vec<Value>) -> HttpR
 }
 
 #[doc = "Create a response template with cookie"]
-pub fn response_json_with_cookie(status: String, message: String, data: Vec<Value>, cookie_type: String, cookie_title: String, cookie_value: String) -> HttpResponse {
+pub fn response_json_with_cookie(status: String, message: String, data: Vec<Value>, cookie: String) -> HttpResponse {
   // init response
   let code = setup_code(status.to_owned());
 
   // set response body
-  let body = ResponseStruct {
-    status: status.to_string(),
-    message: message.to_string(),
+  let body = ResponseCookieStruct {
+    status,
+    message,
     data,
+    token: cookie.to_string(),
   };
 
   // init response
   let mut response = HttpResponse::build(code);
-
-  // init cookie
-  let method = cookie_type.to_owned().to_lowercase();
-
-  if method == "set" {
-    let cookie = Cookie::build(cookie_title, cookie_value)
-      .secure(false)
-      .http_only(false)
-      .same_site(SameSite::Strict)
-      .max_age(Duration::days(7))
-      .finish();
-
-    response.cookie(cookie);
-  } else if method == "remove" {
-    let cookie = Cookie::build(cookie_title, cookie_value)
-      .secure(false)
-      .http_only(false)
-      .same_site(SameSite::Strict)
-      .max_age(Duration::seconds(0))
-      .finish();
-
-    response.cookie(cookie);
-  }
 
   // return response
   response
