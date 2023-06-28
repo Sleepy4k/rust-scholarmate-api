@@ -42,10 +42,11 @@ where
   dev::forward_ready!(service);
 
   fn call(&self, request: ServiceRequest) -> Self::Future {
+    let header = request.headers();
     let path = request.path().to_string();
     let method = request.method().to_string();
 
-    if path == "/" || path == "/login" || path == "/register" || path.starts_with("/apply") || path.starts_with("/application") {
+    if path == "/" || path == "/login" || path == "/register" {
       let res = self.service.call(request);
 
       return Box::pin(async move {
@@ -53,31 +54,34 @@ where
       });
     }
 
-    let jwt_title = env::var("JWT_TOKEN_TITLE").unwrap_or_else(|_| String::from("auth_jwt_secret"));
     let jwt_secret = env::var("JWT_TOKEN_SECRET").unwrap_or_else(|_| String::from("secret"));
-    let token = request.cookie(&jwt_title);
+    let token = header.get("Authorization");
     let validation = Validation::default();
+    
+    let whitelist_routes: HashSet<String> = vec![
+      "/forum".to_owned(),
+      "/student".to_owned(),
+      "/university".to_owned(),
+      "/scholarship".to_owned(),
+    ].into_iter().collect();
+
+    let whitelist_routes = Arc::new(whitelist_routes);
+
+    println!("{:?}", token);
 
     match token {
       Some(token) => {
+        let pure_token = token.to_str().unwrap().replace("Bearer ", "");
+
         match decode::<TokenStruct> (
-          &token.value(),
+          &pure_token,
           &DecodingKey::from_secret(jwt_secret.as_ref()),
           &validation
         ) {
           Ok(data_token) => {
-            let whitelist_routes: HashSet<String> = vec![
-              "/forum".to_owned(),
-              "/student".to_owned(),
-              "/university".to_owned(),
-              "/scholarship".to_owned(),
-            ].into_iter().collect();
-
-            let whitelist_routes = Arc::new(whitelist_routes);
-
             if whitelist_routes.contains(&path) && data_token.claims.role == "user" {
               if method == "POST" || method == "PUT" || method == "DELETE" {
-                let request = request.into_parts().0;
+                let req = request.into_parts().0;
 
                 let response = response_json(
                   "unauthorize".to_string(),
@@ -85,7 +89,7 @@ where
                   vec![]
                 ).map_into_right_body();
 
-                return Box::pin(async { Ok(ServiceResponse::new(request, response)) });
+                return Box::pin(async { Ok(ServiceResponse::new(req, response)) });
               } else {
                 let res = self.service.call(request);
 
@@ -102,7 +106,7 @@ where
             }
           },
           Err(_) => {
-            let request = request.into_parts().0;
+            let req = request.into_parts().0;
 
             let response = response_json(
               "unauthorize".to_string(),
@@ -110,12 +114,12 @@ where
               vec![]
             ).map_into_right_body();
 
-            return Box::pin(async { Ok(ServiceResponse::new(request, response)) });
+            return Box::pin(async { Ok(ServiceResponse::new(req, response)) });
           }
         }
       }
       None => {
-        let request = request.into_parts().0;
+        let req = request.into_parts().0;
 
         let response = response_json(
           "unauthorize".to_string(),
@@ -123,7 +127,7 @@ where
           vec![]
         ).map_into_right_body();
 
-        return Box::pin(async { Ok(ServiceResponse::new(request, response)) });
+        return Box::pin(async { Ok(ServiceResponse::new(req, response)) });
       }
     }
   }
