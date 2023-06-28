@@ -1,5 +1,4 @@
 mod application_controller;
-mod apply_controller;
 mod auth_controller;
 mod forum_controller;
 mod fallback_controller;
@@ -10,7 +9,6 @@ mod user_controller;
 mod welcome_controller;
 
 pub use application_controller::*;
-pub use apply_controller::*;
 pub use auth_controller::*;
 pub use forum_controller::*;
 pub use fallback_controller::*;

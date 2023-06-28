@@ -66,7 +66,6 @@ pub async fn login(state: web::Data<AppState>, body: web::Json<LoginSchema>) -> 
     exp: token_time.saturating_add(604800),
   };
 
-  let jwt_title = env::var("JWT_TOKEN_TITLE").unwrap_or_else(|_| String::from("auth_jwt_secret"));
   let jwt_secret = env::var("JWT_TOKEN_SECRET").unwrap_or_else(|_| String::from("secret"));
   let key = EncodingKey::from_secret(jwt_secret.as_ref());
   let token = encode(&Header::default(), &token_value, &key).unwrap_or_else(|_| String::new());
@@ -86,9 +85,7 @@ pub async fn login(state: web::Data<AppState>, body: web::Json<LoginSchema>) -> 
     "success".to_string(),
     "Successfully logged in".to_string(),
     detail_user,
-    "set".to_string(),
-    jwt_title,
-    token,
+    token
   )
 }
 
@@ -115,12 +112,29 @@ pub async fn register(state: web::Data<AppState>, body: web::Json<RegisterSchema
     None => ()
   };
 
+  if body.password.len() < 8 {
+    return response_json(
+      "failed".to_string(),
+      "Password must be at least 8 characters".to_string(),
+      vec![]
+    )
+  }
+
+  if body.password != body.password_confirmation {
+    return response_json(
+      "failed".to_string(),
+      "Password and confirm password must be same".to_string(),
+      vec![]
+    )
+  }
+
   let hashed_password = hash_password(body.password.as_str());
 
   let user_data = RegisterSchema {
     email: body.email.to_owned(),
-    password: hashed_password.to_owned(),
     role: body.role.to_owned(),
+    password: hashed_password.to_owned(),
+    password_confirmation: hashed_password.to_owned(),
   };
 
   let data = insert_user_data(state.db.clone(), user_data).await;
@@ -134,14 +148,10 @@ pub async fn register(state: web::Data<AppState>, body: web::Json<RegisterSchema
 
 #[doc = "Logout user"]
 pub async fn logout() -> impl Responder {
-  let jwt_title = env::var("JWT_TOKEN_TITLE").unwrap_or_else(|_| String::from("auth_jwt_secret"));
-
   response_json_with_cookie(
     "success".to_string(),
     "Successfully logged out".to_string(),
     vec![],
-    "remove".to_string(),
-    jwt_title,
     "".to_string()
   )
 }
