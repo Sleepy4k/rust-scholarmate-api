@@ -45,9 +45,9 @@ async fn main() -> anyhow::Result<()> {
   let _ = HttpServer::new(move || {
     let cors = Cors::default()
       .allow_any_origin()
-      .allowed_methods(vec!["GET", "POST", "PUT", "PATCH", "DELETE"])
-      .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT, header::CONTENT_TYPE])
-      .supports_credentials()
+      .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+      .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
+      .allowed_header(header::CONTENT_TYPE)
       .max_age(604800);
 
     let json_config = JsonConfig::default()

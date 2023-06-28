@@ -59,8 +59,8 @@ pub fn config(cfg: &mut web::ServiceConfig) {
     // apply route
     .service(
       web::scope("/apply")
-        .route("", web::post().to(post_apply))
-        .route("/{id}", web::put().to(put_apply))
+        .route("", web::post().to(add_student))
+        .route("/{id}", web::put().to(update_student))
     )
 
     // fallback route
