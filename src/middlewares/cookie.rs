@@ -1,8 +1,7 @@
 use std::sync::Arc;
 use std::collections::HashSet;
-use std::{env, future::{ready, Ready}};
+use std::future::{ready, Ready};
 use futures_util::future::LocalBoxFuture;
-use jsonwebtoken::{decode, Validation, DecodingKey};
 use actix_web::{Error, body::EitherBody, dev::{self, Service, ServiceRequest, ServiceResponse, Transform}};
 
 use crate::{helpers::response::response_json, structs::auth_struct::TokenStruct};
@@ -42,93 +41,72 @@ where
   dev::forward_ready!(service);
 
   fn call(&self, request: ServiceRequest) -> Self::Future {
-    let header = request.headers();
     let path = request.path().to_string();
-    let method = request.method().to_string();
 
     if path == "/" || path == "/login" || path == "/register" {
-      let res = self.service.call(request);
+      let fut = self.service.call(request);
 
       return Box::pin(async move {
-        res.await.map(ServiceResponse::map_into_left_body)
-      });
+        fut.await.map(ServiceResponse::map_into_left_body)
+      })
     }
 
-    let jwt_secret = env::var("JWT_TOKEN_SECRET").unwrap_or_else(|_| String::from("secret"));
-    let token = header.get("Authorization");
-    let validation = Validation::default();
-    
     let whitelist_routes: HashSet<String> = vec![
       "/forum".to_owned(),
       "/student".to_owned(),
       "/university".to_owned(),
       "/scholarship".to_owned(),
     ].into_iter().collect();
-
+  
     let whitelist_routes = Arc::new(whitelist_routes);
+  
+    let user_details = request
+      .headers()
+      .get("Authorization")
+      .ok_or(())
+      .and_then(|h| h.to_str().map_err(|_| ()))
+      .ok()
+      .and_then(|s| s.split_whitespace().nth(1))
+      .ok_or(())
+      .and_then(|t| TokenStruct::from_jwt(t).map_err(|_| ()))
+      .ok();
 
-    println!("{:?}", token);
+    if let Some(user) = user_details {
+      if whitelist_routes.contains(&path) && user.role == "user" {
+        let method = request.method().to_string();
 
-    match token {
-      Some(token) => {
-        let pure_token = token.to_str().unwrap().replace("Bearer ", "");
-
-        match decode::<TokenStruct> (
-          &pure_token,
-          &DecodingKey::from_secret(jwt_secret.as_ref()),
-          &validation
-        ) {
-          Ok(data_token) => {
-            if whitelist_routes.contains(&path) && data_token.claims.role == "user" {
-              if method == "POST" || method == "PUT" || method == "DELETE" {
-                let req = request.into_parts().0;
-
-                let response = response_json(
-                  "unauthorize".to_string(),
-                  "you are not allowed to access this route".to_string(),
-                  vec![]
-                ).map_into_right_body();
-
-                return Box::pin(async { Ok(ServiceResponse::new(req, response)) });
-              } else {
-                let res = self.service.call(request);
-
-                return Box::pin(async move {
-                  res.await.map(ServiceResponse::map_into_left_body)
-                });
-              }
-            } else {
-              let res = self.service.call(request);
-
-              return Box::pin(async move {
-                res.await.map(ServiceResponse::map_into_left_body)
-              });
-            }
-          },
-          Err(_) => {
-            let req = request.into_parts().0;
-
-            let response = response_json(
-              "unauthorize".to_string(),
-              "something went wrong from your cookies".to_string(),
-              vec![]
-            ).map_into_right_body();
-
-            return Box::pin(async { Ok(ServiceResponse::new(req, response)) });
-          }
+        if method == "POST" || method == "PUT" || method == "DELETE" {
+          let req = request.into_parts().0;
+          let response = response_json(
+            "unauthorize".to_string(),
+            "you are not allowed to access this route".to_string(),
+            vec![]
+          ).map_into_right_body();
+      
+          return Box::pin(async { Ok(ServiceResponse::new(req, response)) })
+        } else {
+          let fut = self.service.call(request);
+      
+          return Box::pin(async move {
+            fut.await.map(ServiceResponse::map_into_left_body)
+          })
         }
       }
-      None => {
-        let req = request.into_parts().0;
 
-        let response = response_json(
-          "unauthorize".to_string(),
-          "please authorize your self as user".to_string(),
-          vec![]
-        ).map_into_right_body();
-
-        return Box::pin(async { Ok(ServiceResponse::new(req, response)) });
-      }
+      let fut = self.service.call(request);
+  
+      return Box::pin(async move {
+        fut.await.map(ServiceResponse::map_into_left_body)
+      })
     }
+
+    let req = request.into_parts().0;
+    let response = response_json(
+      "unauthorize".to_string(),
+      "please authorize your self as user".to_string(),
+      vec![]
+    ).map_into_right_body();
+
+    return Box::pin(async { Ok(ServiceResponse::new(req, response)) })
   }
 }
