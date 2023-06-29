@@ -20,10 +20,10 @@ pub struct StudentSchema {
   pub region: String,
   #[validate(length(min = 1, max = 255, message = "register_number is required and must be less than 255 characters"))]
   pub register_number: String,
-  #[validate(range(min = 0, max = 700, message = "toefl_score is required and must be less than 700"))]
-  pub toefl_score: i32,
-  #[validate(range(min = 0, max = 9, message = "ielts_score is required and must be less than 700"))]
-  pub ielts_score: i32,
+  // #[validate(range(min = 0, max = 700, message = "toefl_score is required and must be less than 700"))]
+  pub toefl_score: String,
+  // #[validate(range(min = 0, max = 9, message = "ielts_score is required and must be less than 700"))]
+  pub ielts_score: String,
 }
 
 #[doc = "Validate date of birth"]
