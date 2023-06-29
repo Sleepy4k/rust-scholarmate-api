@@ -6,9 +6,9 @@ use actix_web::{
   App,
   error,
   HttpServer,
-  http::header,
   HttpResponse,
   web::{Data, JsonConfig},
+  http::header::{self, HeaderValue},
   middleware::{Logger, DefaultHeaders}
 };
 
@@ -44,10 +44,21 @@ async fn main() -> anyhow::Result<()> {
 
   let _ = HttpServer::new(move || {
     let cors = Cors::default()
-      .allow_any_origin()
-      .allowed_methods(vec!["GET", "POST", "PUT", "DELETE", "OPTIONS"])
-      .allowed_headers(vec![header::AUTHORIZATION, header::ACCEPT])
-      .allowed_header(header::CONTENT_TYPE)
+      .allowed_origin_fn(|origin, _| {
+        let allowed_origin = env::var("CORS_ORIGIN").unwrap_or("http://localhost:3000".into());
+        [
+          HeaderValue::from_str(&allowed_origin).unwrap_or(HeaderValue::from_static("http://localhost:3000")),
+        ]
+        .contains(origin)
+      })
+      .allowed_headers(vec![
+        header::AUTHORIZATION,
+        header::ACCEPT,
+        header::CONTENT_TYPE,
+        header::ORIGIN,
+      ])
+      .allow_any_method()
+      .supports_credentials()
       .max_age(604800);
 
     let json_config = JsonConfig::default()
