@@ -5,7 +5,7 @@ use sqlx::{Pool, Postgres};
 use crate::{
   models::student_model::*,
   schemas::student_schema::*,
-  helpers::parse::{convert_vec_to_values, to_i32}
+  helpers::parse::convert_vec_to_values
 };
 
 #[doc = "Fetch all student data"]
@@ -26,7 +26,7 @@ pub async fn insert_student_data(pool: Pool<Postgres>, body: StudentSchema) -> V
   let data = sqlx::query_as!(StudentModel,
     "insert into students (first_name, last_name, email, phone, date_of_birth, region, register_number, toefl_score, ielts_score)
       values ($1, $2, $3, $4, $5, $6, $7, $8, $9) returning *",
-    body.first_name, body.last_name, body.email, body.phone, dob, body.region, body.register_number, to_i32(Value::String(body.toefl_score)), to_i32(Value::String(body.ielts_score)))
+    body.first_name, body.last_name, body.email, body.phone, dob, body.region, body.register_number, body.toefl_score, body.ielts_score)
     .fetch_all(&pool)
     .await
     .unwrap();
@@ -62,7 +62,7 @@ pub async fn update_student_data_by_id(pool: Pool<Postgres>, id: i32, body: Stud
   let data = sqlx::query_as!(StudentModel,
     "update students set first_name = $1, last_name = $2, email = $3, phone = $4, date_of_birth = $5,
       region = $6, register_number = $7, toefl_score = $8, ielts_score = $9 where id = $10 returning *",
-    body.first_name, body.last_name, body.email, body.phone, dob, body.region, body.register_number, to_i32(Value::String(body.toefl_score)), to_i32(Value::String(body.ielts_score)), id)
+    body.first_name, body.last_name, body.email, body.phone, dob, body.region, body.register_number, body.toefl_score, body.ielts_score, id)
     .fetch_all(&pool)
     .await
     .unwrap();
