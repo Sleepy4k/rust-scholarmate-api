@@ -18,12 +18,12 @@ pub struct StudentSchema {
   pub date_of_birth: String,
   #[validate(length(min = 1, max = 255, message = "region is required and must be less than 255 characters"))]
   pub region: String,
-  #[validate(length(min = 1, max = 255, message = "register_number is required and must be less than 255 characters"))]
+  #[validate(length(min = 16, max = 20, message = "register_number is required and must be more than 16 and less than 20 characters"))]
   pub register_number: String,
-  // #[validate(range(min = 0, max = 700, message = "toefl_score is required and must be less than 700"))]
-  pub toefl_score: String,
-  // #[validate(range(min = 0, max = 9, message = "ielts_score is required and must be less than 700"))]
-  pub ielts_score: String,
+  #[validate(range(min = 0, max = 700, message = "toefl_score is required and must be less than 701"))]
+  pub toefl_score: i32,
+  #[validate(range(min = 0, max = 9, message = "ielts_score is required and must be less than 10"))]
+  pub ielts_score: i32,
 }
 
 #[doc = "Validate date of birth"]
