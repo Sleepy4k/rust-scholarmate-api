@@ -1,4 +1,5 @@
 *
 !*.up.sql
+!README.md
 !*.down.sql
 !.gitignore
