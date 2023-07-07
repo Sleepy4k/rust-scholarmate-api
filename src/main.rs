@@ -93,7 +93,7 @@ async fn main() -> anyhow::Result<()> {
       .wrap(cors)
       .wrap(Logger::default())
       .wrap(DefaultHeaders::new().add((app_name_slug.as_str(), app_version.as_str())))
-      .wrap(cookie::CheckCookie)
+      // .wrap(cookie::CheckCookie)
       .app_data(json_config)
       .app_data(Data::new(main_struct::AppState { db: database.clone() }))
       .configure(routes::config)
