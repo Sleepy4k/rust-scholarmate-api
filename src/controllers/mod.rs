@@ -1,12 +1,12 @@
-mod application_controller;
-mod auth_controller;
-mod forum_controller;
-mod fallback_controller;
-mod scholarship_controller;
-mod student_controller;
-mod university_controller;
-mod user_controller;
-mod welcome_controller;
+pub mod application_controller;
+pub mod auth_controller;
+pub mod forum_controller;
+pub mod fallback_controller;
+pub mod scholarship_controller;
+pub mod student_controller;
+pub mod university_controller;
+pub mod user_controller;
+pub mod welcome_controller;
 
 pub use application_controller::*;
 pub use auth_controller::*;
