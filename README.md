@@ -1,5 +1,5 @@
-
 # Scholarmate
+
 an API service made for the needs of scholarship registration for students to ease the burden of registering for lectures
 
 ## Screenshots  
@@ -93,9 +93,9 @@ To run this project, you will need to add the following environment variables to
 
 `DATABASE_URL`  
 
-`JWT_TOKEN_TITLE` 
+`JWT_TOKEN_TITLE`
 
-`JWT_TOKEN_SECRET` 
+`JWT_TOKEN_SECRET`
 
 ## Acknowledgements  
 
@@ -106,7 +106,7 @@ To run this project, you will need to add the following environment variables to
 
 ## Feedback  
 
-If you have any feedback, please reach out to us at sarahpalastrin@gmail.com
+If you have any feedback, please reach out to us at <sarahpalastrin@gmail.com>
 
 ## License  
 
