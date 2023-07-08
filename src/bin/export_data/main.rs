@@ -14,6 +14,7 @@ use actix_web::{
 
 use scholarmate_api::{
   structs::main_struct::AppState,
+  // middlewares::cookie::CheckCookie,
   helpers::{
     parse::slugify,
     database::connect_postgres
@@ -97,7 +98,7 @@ async fn main() -> anyhow::Result<()> {
     .wrap(cors)
     .wrap(Logger::default())
     .wrap(DefaultHeaders::new().add((app_name_slug.as_str(), app_version.as_str())))
-    // .wrap(cookie::CheckCookie)
+    // .wrap(CheckCookie)
     .app_data(json_config)
     .app_data(Data::new(AppState { db: database.clone() }))
     .configure(routes::config)

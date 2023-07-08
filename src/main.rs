@@ -14,8 +14,6 @@ use actix_web::{
 
 use scholarmate_api::*;
 
-extern crate argon2;
-
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
   dotenv().ok();

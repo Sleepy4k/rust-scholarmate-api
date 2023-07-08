@@ -8,11 +8,6 @@ pub fn config(cfg: &mut web::ServiceConfig) {
     // welcome route
     .route("/", web::route().to(welcome))
 
-    // auth route
-    .route("/login", web::post().to(login))
-    .route("/register", web::post().to(register))
-    .route("/logout", web::post().to(logout))
-
     // user route
     .route("/user", web::get().to(get_user))
 
