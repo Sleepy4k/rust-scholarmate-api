@@ -2,6 +2,7 @@ use actix_web::web;
 
 use crate::controllers::*;
 
+#[doc = "Set routes for application"]
 pub fn config(cfg: &mut web::ServiceConfig) {
   cfg
     // welcome route
