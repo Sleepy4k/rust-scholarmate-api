@@ -1,33 +1,67 @@
-use serde_json::Value;
+use csv::WriterBuilder;
+use serde_json::{Value, Map};
+use std::{path::PathBuf, collections::BTreeMap};
 
-use scholarmate_api::helpers::parse::{to_str, map_get};
+use crate::helpers::parse::*;
 
-pub async fn write_csv_file(data: Vec<Vec<(String, Value)>>) -> String {
-  let mut data_str = String::new();
+use scholarmate_api::helpers::parse::{to_str, to_array};
 
+#[doc = "Write csv file"]
+async fn write_csv_file(path: PathBuf, data: Vec<Map<String, Value>>, ref_header: BTreeMap<String, String>, sort_header: Vec<String>) -> anyhow::Result<()> {
+  let mut workbook = WriterBuilder::new()
+    .has_headers(true)
+    .delimiter(b',')
+    .from_path(path)?;
+  
   for (row_idx, row) in data.into_iter().enumerate() {
-    if row_idx == 0 {
-      let keys = row.clone().into_iter().map(|x| x.0).collect::<Vec<_>>();
+    if !sort_header.is_empty() {
+      if row_idx == 0 {
+        let translated_header = sort_header.iter().map(|x| {
+          ref_header.get(x).unwrap_or(x).to_owned()
+        }).collect::<Vec<String>>();
 
-      data_str.push_str(keys.join("|").as_str());
-      data_str.push('\n');
+        workbook.write_record(&translated_header)?;
+      }
+
+      let record_data = sort_header.iter().map(|x| {
+        row.get(x).unwrap_or(&Value::Null).to_owned().to_string()
+      }).collect::<Vec<String>>();
+      
+      workbook.write_record(&record_data)?;
+    } else {
+      if row_idx == 0 {
+        let translated_header = row.keys().cloned().into_iter().map(|x| {
+          ref_header.get(&x).unwrap_or(&x).to_owned()
+        }).collect::<Vec<String>>();
+
+        workbook.write_record(&translated_header)?;
+      }
+
+      let record_data = row.into_iter().map(|(_y, x)| {
+        x.to_string()
+      }).collect::<Vec<String>>();
+
+      workbook.write_record(&record_data)?;
     }
+  };
 
-    let values = row.clone().into_iter().map(|x| x.1.to_string()).collect::<Vec<_>>();
+  workbook.flush()?;
 
-    data_str.push_str(values.join("|").as_str());
-    data_str.push('\n');
-  }
-
-  data_str
+  Ok(())
 }
 
-pub fn build_csv_file(data: Value, headers: Vec<Value>) -> Vec<(String, Value)> {
-  let mut formatted_data = Vec::new();
+#[doc = "Build csv file"]
+pub async fn build_csv_file(param: (Vec<Map<String, Value>>, Vec<Value>), fields: Value, path: PathBuf) -> anyhow::Result<Vec<u8>> {
+  let sort_field = to_array(fields)
+    .into_iter().map(|x| {
+      to_str(x)
+    }).collect::<Vec<String>>();
 
-  for header in headers {
-    formatted_data.push((header["language"].to_string(), map_get(&to_str(header["column_name"].clone()), data.to_owned())));
-  }
+  let (result, data_ref_ui_column) = param;
+  let new_ref_ui_column = mapping_translate_data(data_ref_ui_column);
 
-  formatted_data
+  if let Ok(_) = write_csv_file(path.clone(), result, new_ref_ui_column, sort_field).await {};
+  let data = if let Ok(buff) = get_file_path(path) { buff } else { vec![] };
+
+  Ok(data)
 }
