@@ -57,18 +57,6 @@ pub fn response_file(status: String, body: Vec<u8>, disposition: String, content
     .body(body)
 }
 
-#[doc = "Create a response template for file"]
-pub fn response_file2(status: String, body: String, disposition: String, content_type: String) -> HttpResponse {
-  // init response
-  let code = setup_code(status.to_owned());
-
-  // return response
-  HttpResponse::build(code)
-    .append_header(("Content-Disposition", disposition))
-    .append_header(("Content-Type", content_type))
-    .json(body)
-}
-
 #[doc = "Create a response template with cookie"]
 pub fn response_json_with_cookie(status: String, message: String, data: Vec<Value>, token: String) -> HttpResponse {
   // init response
