@@ -20,6 +20,7 @@ pub struct TokenStruct {
 }
 
 impl TokenStruct {
+  #[doc = "Create token from jwt"]
   pub fn from_jwt(token: &str) -> Result<TokenStruct, String> {
     let jwt_secret = env::var("JWT_TOKEN_SECRET").unwrap_or("your_secret_token".to_owned());
     let key = DecodingKey::from_secret(jwt_secret.as_ref());
@@ -37,6 +38,7 @@ impl TokenStruct {
     }
   }
 
+  #[doc = "Create jwt from token"]
   pub fn to_jwt(self) -> String {
     let jwt_secret = env::var("JWT_TOKEN_SECRET").unwrap_or("your_secret_token".to_owned());
     let key = EncodingKey::from_secret(jwt_secret.as_ref());
