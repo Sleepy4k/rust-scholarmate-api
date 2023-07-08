@@ -1,6 +1,6 @@
 use argon2::{self, Config};
 
-#[doc = "Salt and hash a password"]
+#[doc = "Hash a password"]
 pub fn hash_password(password: &str) -> String {
   let config = Config::default();
   let salt = b"mermoauthhash";

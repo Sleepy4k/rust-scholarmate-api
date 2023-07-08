@@ -1,10 +1,10 @@
-pub mod auth;
+pub mod hashing;
 pub mod database;
 pub mod parse;
 pub mod response;
 pub mod validation;
 
-pub use auth::*;
+pub use hashing::*;
 pub use database::*;
 pub use parse::*;
 pub use response::*;
