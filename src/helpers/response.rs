@@ -52,6 +52,7 @@ pub fn response_file(status: String, body: Vec<u8>, disposition: String, content
 
   // return response
   HttpResponse::build(code)
+    .append_header(("Access-Control-Expose-Headers", "Content-Disposition"))
     .append_header(("Content-Disposition", disposition))
     .append_header(("Content-Type", content_type))
     .body(body)
