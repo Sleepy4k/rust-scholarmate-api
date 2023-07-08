@@ -1,8 +1,12 @@
 use actix_web::web;
 
 use crate::controllers::*;
-use scholarmate_api::controllers::fallback_controller::*;
+use scholarmate_api::controllers::{
+  welcome_controller::*,
+  fallback_controller::*
+};
 
+#[doc = "Set routes for application"]
 pub fn config(cfg: &mut web::ServiceConfig) {
   cfg
     // welcome route
@@ -11,8 +15,29 @@ pub fn config(cfg: &mut web::ServiceConfig) {
     // university routes
     .service(
       web::scope("/university")
-        .route("excel", web::post().to(export_excel))
-        .route("csv", web::post().to(export_csv))
+        .route("csv", web::post().to(university_export_csv))
+        .route("excel", web::post().to(university_export_excel))
+    )
+
+    // student routes
+    .service(
+      web::scope("/student")
+        .route("csv", web::post().to(student_export_csv))
+        .route("excel", web::post().to(student_export_excel))
+    )
+
+    // user routes
+    .service(
+      web::scope("/user")
+        .route("csv", web::post().to(user_export_csv))
+        .route("excel", web::post().to(user_export_excel))
+    )
+
+    // scholarship routes
+    .service(
+      web::scope("/scholarship")
+        .route("csv", web::post().to(scholarship_export_csv))
+        .route("excel", web::post().to(scholarship_export_excel))
     )
 
     // fallback route

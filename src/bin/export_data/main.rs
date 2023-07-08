@@ -21,6 +21,7 @@ use scholarmate_api::{
 };
 
 mod routes;
+mod schemas;
 mod helpers;
 mod controllers;
 
@@ -34,13 +35,13 @@ async fn main() -> anyhow::Result<()> {
 
   env_logger::init_from_env(env_logger::Env::new().default_filter_or("info"));
 
-  let port = env::var("BIN_EXPORT_DATA_PORT")
-    .expect("no environment variable set for \"BIN_EXPORT_DATA_PORT\"")
+  let port = env::var("EXPORT_DATA_PORT")
+    .expect("no environment variable set for \"EXPORT_DATA_PORT\"")
     .parse::<u16>()
-    .unwrap_or(8080);
+    .unwrap_or(8081);
 
-  let hostname = env::var("BIN_EXPORT_DATA_HOST")
-    .expect("no environment variable set for \"BIN_EXPORT_DATA_HOST\"")
+  let hostname = env::var("EXPORT_DATA_HOST")
+    .expect("no environment variable set for \"EXPORT_DATA_HOST\"")
     .parse::<String>()
     .unwrap_or_else(|_| String::from("localhost"));
 
@@ -69,7 +70,8 @@ async fn main() -> anyhow::Result<()> {
         let message = err.to_string();
         let response = json!({
           "status": "error",
-          "message": message
+          "message": message,
+          "data": null
         });
 
         error::InternalError::from_response(
@@ -79,15 +81,15 @@ async fn main() -> anyhow::Result<()> {
         .into()
       });
 
-    let app_name = env::var("BIN_EXPORT_DATA_NAME")
-    .expect("BIN_EXPORT_DATA_NAME not set")
+    let app_name = env::var("EXPORT_DATA_NAME")
+    .expect("EXPORT_DATA_NAME not set")
     .parse::<String>()
     .unwrap_or_else(|_| String::from("Actix API"));
 
     let app_name_slug = slugify(&format!("{}-{}", app_name, "version"));
 
-    let app_version = env::var("BIN_EXPORT_DATA_VERSION")
-    .expect("BIN_EXPORT_DATA_VERSION not set")
+    let app_version = env::var("EXPORT_DATA_VERSION")
+    .expect("EXPORT_DATA_VERSION not set")
     .parse::<String>()
     .unwrap_or_else(|_| String::from("1.0.0"));
 
