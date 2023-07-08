@@ -1,6 +1,6 @@
 use pretty_assertions::{assert_eq, assert_ne};
 
-use scholarmate_api::helpers::auth::*;
+use scholarmate_api::helpers::hashing::*;
 
 #[test]
 #[doc(hidden)]
