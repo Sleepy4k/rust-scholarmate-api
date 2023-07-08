@@ -99,10 +99,16 @@ To run this project, you will need to add the following environment variables to
 
 ## Acknowledgements  
 
-- [Rust Lang](https://doc.rust-lang.org/book/)
+- [Rust Lang](https://doc.rust-lang.org/book)
+- [Actix Web](https://docs.rs/actix-web/4.2.1/actix_web)
+- [Sqlx](https://docs.rs/sqlx/0.6.3/sqlx)
 - [Sqlx CLI](https://lib.rs/crates/sqlx-cli)
 - [Unit Test](https://doc.rust-lang.org/cargo/reference/cargo-targets.html#tests)
 - [Example](https://doc.rust-lang.org/cargo/reference/cargo-targets.html#examples)
+- [Validator](https://docs.rs/validator/latest/validator)
+- [CSV Writer](https://docs.rs/csv/latest/csv/tutorial/index.html)
+- [XLSX Writer](https://docs.rs/xlsxwriter/latest/xlsxwriter)
+- [Argon2](https://docs.rs/rust-argon2/1.0.0/argon2)
 
 ## Feedback  
 
