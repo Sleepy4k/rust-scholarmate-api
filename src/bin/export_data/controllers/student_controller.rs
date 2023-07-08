@@ -55,7 +55,7 @@ pub async fn student_export_excel(state: web::Data<AppState>, body: web::Json<Ge
   let fields = fetch_translate_data_by_table(state.db.clone(), table.to_owned()).await;
   
   let formatted_datetime = get_current_time();
-  let file_name = format!("{}-{}.csv", table, formatted_datetime);
+  let file_name = format!("{}-{}.xlsx", table, formatted_datetime);
   let path: PathBuf = file_name.parse().unwrap();
 
   let last_res = build_excel_file(
