@@ -1,5 +1,4 @@
 pub mod application_controller;
-pub mod auth_controller;
 pub mod forum_controller;
 pub mod fallback_controller;
 pub mod scholarship_controller;
@@ -9,7 +8,6 @@ pub mod user_controller;
 pub mod welcome_controller;
 
 pub use application_controller::*;
-pub use auth_controller::*;
 pub use forum_controller::*;
 pub use fallback_controller::*;
 pub use scholarship_controller::*;
