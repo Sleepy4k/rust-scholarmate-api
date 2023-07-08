@@ -18,8 +18,8 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
   // Specify the file path to save the CSV file
   let current_datetime = Local::now();
-  let formatted_datetime = current_datetime.format("%Y-%m-%d-%H-%M-%S").to_string();
-  let file_path = format!("export_results/{}.csv", formatted_datetime);
+  let formatted_datetime = current_datetime.format("%y%m%d%H%M%S").to_string();
+  let file_path = format!("export_results/Users-{}.csv", formatted_datetime);
 
   // Export data to CSV
   let _ = export_data_to_csv(pool, file_path.as_str()).await;
