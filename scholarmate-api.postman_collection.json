@@ -1,0 +1,524 @@
+{
+	"info": {
+		"_postman_id": "20c8c74c-5349-467e-838a-0522329adde4",
+		"name": "scholarmate-api",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "21008900"
+	},
+	"item": [
+		{
+			"name": "server-8000",
+			"item": [
+				{
+					"name": "forum",
+					"item": [
+						{
+							"name": "forum/{id}",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwicm9sZSI6InVzZXIiLCJlbWFpbCI6ImpvaG5kb2VAZXhhbXBsZS5jb20iLCJpYXQiOjE2ODg3ODEzMjQsImV4cCI6MTY4OTM4NjEyNH0.XJCJKCb3SPsivUg1mthxBj0ThsX7RfiKH2IkZz9Hr_c",
+											"type": "string"
+										}
+									]
+								},
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "localhost:8000/forum/1",
+									"host": [
+										"localhost"
+									],
+									"port": "8000",
+									"path": [
+										"forum",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "apply",
+					"item": [
+						{
+							"name": "apply",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwicm9sZSI6InVzZXIiLCJlbWFpbCI6ImpvaG5kb2VAZXhhbXBsZS5jb20iLCJpYXQiOjE2ODg3ODEzMjQsImV4cCI6MTY4OTM4NjEyNH0.XJCJKCb3SPsivUg1mthxBj0ThsX7RfiKH2IkZz9Hr_c",
+											"type": "string"
+										}
+									]
+								},
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"first_name\": \"John\",\r\n    \"last_name\": \"Doe\",\r\n    \"email\": \"johndoe@example.com\",\r\n    \"phone\": \"08412356458\",\r\n    \"date_of_birth\": \"1981-02-07\",\r\n    \"region\": \"east java\",\r\n    \"register_number\": \"1234567891234567\",\r\n    \"toefl_score\": 678,\r\n    \"ielts_score\": 7\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8000/apply",
+									"host": [
+										"localhost"
+									],
+									"port": "8000",
+									"path": [
+										"apply"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "apply/{id}",
+							"request": {
+								"auth": {
+									"type": "bearer",
+									"bearer": [
+										{
+											"key": "token",
+											"value": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpZCI6MSwicm9sZSI6InVzZXIiLCJlbWFpbCI6ImpvaG5kb2VAZXhhbXBsZS5jb20iLCJpYXQiOjE2ODg3ODEzMjQsImV4cCI6MTY4OTM4NjEyNH0.XJCJKCb3SPsivUg1mthxBj0ThsX7RfiKH2IkZz9Hr_c",
+											"type": "string"
+										}
+									]
+								},
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"first_name\": \"John\",\r\n    \"last_name\": \"Doe\",\r\n    \"email\": \"johndoe@example.com\",\r\n    \"phone\": \"08412356458\",\r\n    \"date_of_birth\": \"1981-02-07\",\r\n    \"region\": \"East Java\",\r\n    \"register_number\": \"1234567891234567\",\r\n    \"toefl_score\": 678,\r\n    \"ielts_score\": 7\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8000/apply/1",
+									"host": [
+										"localhost"
+									],
+									"port": "8000",
+									"path": [
+										"apply",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "welcome",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8000",
+							"host": [
+								"localhost"
+							],
+							"port": "8000"
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "user",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8000/user",
+							"host": [
+								"localhost"
+							],
+							"port": "8000",
+							"path": [
+								"user"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "server-8001",
+			"item": [
+				{
+					"name": "university",
+					"item": [
+						{
+							"name": "csv",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"fields\": []\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8001/university/csv",
+									"host": [
+										"localhost"
+									],
+									"port": "8001",
+									"path": [
+										"university",
+										"csv"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "excel",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"fields\": []\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8001/university/excel",
+									"host": [
+										"localhost"
+									],
+									"port": "8001",
+									"path": [
+										"university",
+										"excel"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "student",
+					"item": [
+						{
+							"name": "csv",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"fields\": []\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8001/student/csv",
+									"host": [
+										"localhost"
+									],
+									"port": "8001",
+									"path": [
+										"student",
+										"csv"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "excel",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"fields\": []\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8001/student/csv",
+									"host": [
+										"localhost"
+									],
+									"port": "8001",
+									"path": [
+										"student",
+										"csv"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "user",
+					"item": [
+						{
+							"name": "csv",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"fields\": []\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8001/user/csv",
+									"host": [
+										"localhost"
+									],
+									"port": "8001",
+									"path": [
+										"user",
+										"csv"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "excel",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"fields\": []\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8001/user/csv",
+									"host": [
+										"localhost"
+									],
+									"port": "8001",
+									"path": [
+										"user",
+										"csv"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "scholarship",
+					"item": [
+						{
+							"name": "csv",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"fields\": []\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8001/user/csv",
+									"host": [
+										"localhost"
+									],
+									"port": "8001",
+									"path": [
+										"user",
+										"csv"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "excel",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"fields\": []\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "localhost:8001/user/csv",
+									"host": [
+										"localhost"
+									],
+									"port": "8001",
+									"path": [
+										"user",
+										"csv"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "welcome",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8001/",
+							"host": [
+								"localhost"
+							],
+							"port": "8001",
+							"path": [
+								""
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "server-8002",
+			"item": [
+				{
+					"name": "welcome",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "localhost:8002/",
+							"host": [
+								"localhost"
+							],
+							"port": "8002",
+							"path": [
+								""
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "login",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"johndoe@example.com\",\r\n    \"password\": \"johndoe123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8002/login",
+							"host": [
+								"localhost"
+							],
+							"port": "8002",
+							"path": [
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "register",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"johndoe@example.com\",\r\n    \"password\": \"johndoe123\",\r\n    \"password_confirmation\": \"johndoe123\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "localhost:8002/register",
+							"host": [
+								"localhost"
+							],
+							"port": "8002",
+							"path": [
+								"register"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "logout",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"url": {
+							"raw": "localhost:8002/logout",
+							"host": [
+								"localhost"
+							],
+							"port": "8002",
+							"path": [
+								"logout"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		}
+	]
+}
