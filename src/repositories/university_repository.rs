@@ -22,8 +22,8 @@ pub async fn fetch_university_data(pool: Pool<Postgres>) -> Vec<Value> {
 #[doc = "Insert new university"]
 pub async fn insert_university_data(pool: Pool<Postgres>, body: UniversitySchema) -> Vec<Value> {
   let data = sqlx::query_as!(UniversityModel,
-    "insert into universities (name, major, quantity, description) values ($1, $2, $3, $4) returning *",
-    body.name, body.major, body.quantity, body.description)
+    "insert into universities (name, major, quantity, description, image, link, alias) values ($1, $2, $3, $4, $5, $6, $7) returning *",
+    body.name, body.major, body.quantity, body.description, body.image, body.link, body.alias)
     .fetch_all(&pool)
     .await
     .unwrap();
@@ -56,8 +56,8 @@ pub async fn fetch_university_data_by_exists_column(pool: Pool<Postgres>, name: 
 #[doc = "Update university data"]
 pub async fn update_university_data(pool: Pool<Postgres>, id: i32, body: UniversitySchema) -> Vec<Value> {
   let data = sqlx::query_as!(UniversityModel,
-    "update universities set name = $1, major = $2, quantity = $3, description = $4 where id = $5 returning *",
-    body.name, body.major, body.quantity, body.description, id)
+    "update universities set name = $1, major = $2, quantity = $3, description = $4, image = $5, link = $6, alias = $7 where id = $8 returning *",
+    body.name, body.major, body.quantity, body.description, body.image, body.link, body.alias, id)
     .fetch_all(&pool)
     .await
     .unwrap();
