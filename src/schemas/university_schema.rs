@@ -14,6 +14,12 @@ pub struct UniversitySchema {
   pub quantity: i32,
   #[validate(length(min = 1, max = 255, message = "description is required and must be less than 255 characters"))]
   pub description: String,
+  #[validate(length(min = 1, max = 255, message = "image is required and must be less than 255 characters"))]
+  pub image: String,
+  #[validate(length(min = 1, max = 255, message = "link is required and must be less than 255 characters"))]
+  pub link: String,
+  #[validate(length(min = 1, max = 255, message = "alias is required and must be less than 255 characters"))]
+  pub alias: String,
 }
 
 #[doc = "Validate positif number"]

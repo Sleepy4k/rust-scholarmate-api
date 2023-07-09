@@ -8,16 +8,14 @@ use crate::helpers::validation::check_if_positif_number;
 pub struct ScholarshipSchema {
   #[validate(length(min = 1, max = 255, message = "name is required and must be less than 255 characters"))]
   pub name: String,
-  #[validate(length(min = 1, max = 255, message = "major is required and must be less than 255 characters"))]
-  pub major: String,
-  #[validate(custom = "validate_positif_number")]
-  pub univ_id: i32,
   #[validate(custom = "validate_positif_number")]
   pub quantity: i32,
   #[validate(length(min = 1, max = 255, message = "description is required and must be less than 255 characters"))]
   pub description: String,
   #[validate(length(min = 1, max = 255, message = "requirement is required and must be less than 255 characters"))]
   pub requirement: String,
+  #[validate(custom = "validate_positif_number")]
+  pub univ_id: i32,
 }
 
 #[doc = "Validate positif number"]
