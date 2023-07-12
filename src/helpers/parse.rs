@@ -7,6 +7,7 @@ use chrono::{Local, NaiveDateTime, format::strftime::StrftimeItems};
 pub fn slugify(text: &str) -> String {
   text.replace(" ", "-")
 }
+
 #[doc = "function to convert value to string"]
 pub fn to_str(data: Value) -> String {
   data.as_str().unwrap_or("").to_owned()
@@ -35,6 +36,13 @@ pub fn to_array(map: Value) -> Vec<Value> {
 #[doc = "function to convert any struct to json"]
 pub fn convert_vec_to_values<T: Serialize>(data: Vec<T>) -> Vec<Value> {
   data.into_iter().map(|item| to_value(item).unwrap()).collect()
+}
+
+#[doc = "Get email parts"]
+pub fn get_email_parts(email: &str) -> Vec<&str> {
+  let email_parts = email.split("@").collect::<Vec<&str>>();
+
+  email_parts
 }
 
 #[doc = "Get modified duration"]
