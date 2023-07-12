@@ -12,8 +12,11 @@ use crate::{
 
 use scholarmate_api::{
   structs::main_struct::AppState,
-  helpers::hashing::hash_password,
-  helpers::response::response_json
+  helpers::{
+    parse::get_email_parts,
+    hashing::hash_password,
+    response::response_json
+  }
 };
 
 #[doc = "Register new user"]
@@ -55,7 +58,8 @@ pub async fn register(state: web::Data<AppState>, body: web::Json<RegisterSchema
     )
   }
 
-  let hashed_password = hash_password(body.password.as_str());
+  let salt = get_email_parts(body.email.as_str())[0];
+  let hashed_password = hash_password(body.password.as_str(), salt.as_bytes());
 
   let user_data = RegisterSchema {
     email: body.email.to_owned(),

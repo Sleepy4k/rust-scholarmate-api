@@ -10,13 +10,13 @@ use crate::{
 };
 
 use scholarmate_api::{
-  helpers::hashing::verify_password,
   repositories::student_repository::fetch_student_data_by_exists_column,
   structs::{
     main_struct::AppState,
     auth_struct::TokenStruct
   },
   helpers::{
+    hashing::verify_password,
     parse::convert_vec_to_values,
     response::{response_json, response_json_with_cookie}
   }
@@ -49,6 +49,14 @@ pub async fn login(state: web::Data<AppState>, body: web::Json<LoginSchema>) -> 
     return response_json(
       String::from("failed"),
       String::from("email or password is wrong"),
+      vec![]
+    )
+  }
+
+  if user.verified == false {
+    return response_json(
+      String::from("failed"),
+      String::from("please verify your account first"),
       vec![]
     )
   }
