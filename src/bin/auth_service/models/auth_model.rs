@@ -8,6 +8,7 @@ pub struct UserModel {
   pub id: i32,
   pub email: String,
   pub role: String,
+  pub verified: bool,
   pub password: String,
 }
 
