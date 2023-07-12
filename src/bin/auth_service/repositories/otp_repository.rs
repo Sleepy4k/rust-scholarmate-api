@@ -27,6 +27,7 @@ pub async fn insert_otp_data(pool: Pool<Postgres>, token: String, otp: String, e
     }
 }
 
+#[doc = "Delete otp data by token"]
 pub async fn delete_otp_data(pool: Pool<Postgres>, token: String) -> Vec<Value> {
   let data = sqlx::query_as!(OTPModel,
     "delete from tokens where token = $1 returning *",
