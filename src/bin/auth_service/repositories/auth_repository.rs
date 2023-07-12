@@ -14,8 +14,8 @@ use scholarmate_api::{
 #[doc = "Insert new user"]
 pub async fn insert_user_data(pool: Pool<Postgres>, body: RegisterSchema) -> Vec<Value> {
   let data = sqlx::query_as!(FilteredUserModel,
-    "insert into users (email, password, role) values ($1, $2, $3) returning id, email, role",
-    body.email, body.password, String::from("user"))
+    "insert into users (email, password, role, verified) values ($1, $2, $3, $4) returning id, email, role",
+    body.email, body.password, String::from("user"), false)
     .fetch_all(&pool)
     .await
     .unwrap();
@@ -33,4 +33,16 @@ pub async fn fetch_user_data_by_email(pool: Pool<Postgres>, email: String) -> Op
     .unwrap();
 
   data
+}
+
+#[doc = "Update verified status"]
+pub async fn update_verified_status(pool: Pool<Postgres>, email: String) -> anyhow::Result<bool> {
+  match sqlx::query!(
+    "update users set verified = true where email = $1",
+    email)
+    .execute(&pool)
+    .await {
+      Ok(_) => Ok(true),
+      Err(_) => Ok(false)
+    }
 }
