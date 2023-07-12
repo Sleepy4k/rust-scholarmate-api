@@ -1,5 +1,5 @@
-use serde::{Serialize, Deserialize};
 use validator::Validate;
+use serde::{Serialize, Deserialize};
 
 #[doc = "Register schema"]
 #[derive(Debug, Deserialize, Serialize, Validate)]
