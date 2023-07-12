@@ -4,6 +4,7 @@ CREATE TABLE IF NOT EXISTS users(
     email character varying(255) NOT NULL,
     role character varying(255) NOT NULL,
     password character varying(255) NOT NULL,
+    verified boolean NOT NULL DEFAULT false,
     PRIMARY KEY(id)
 );
 CREATE UNIQUE INDEX email_1686980212905_index ON "users" USING btree ("email");
