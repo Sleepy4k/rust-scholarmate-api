@@ -25,6 +25,7 @@ use scholarmate_api::{
 
 mod routes;
 mod models;
+mod helpers;
 mod schemas;
 mod controllers;
 mod repositories;
