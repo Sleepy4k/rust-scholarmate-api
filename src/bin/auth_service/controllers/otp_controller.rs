@@ -2,12 +2,13 @@ use otp::make_hmac_otp;
 use validator::Validate;
 use serde_json::{Value, json};
 use actix_web::{web, Responder};
+use lettre::message::header::ContentType;
 
 use crate::{
   schemas::otp_schema::*,
   helpers::{
     token::*,
-    mailer::send_email,
+    mailer::*,
     parse::string_to_vec
   },
   repositories::{
@@ -28,6 +29,7 @@ use scholarmate_api::{
   },
 };
 
+#[doc = "Add new otp"]
 pub async fn add_otp(state: web::Data<AppState>, body: web::Json<OTPSchema>) -> impl Responder {
   let validate_form = body.validate();
 
@@ -38,6 +40,17 @@ pub async fn add_otp(state: web::Data<AppState>, body: web::Json<OTPSchema>) -> 
       String::from("failed"),
       String::from("please fill all fields"),
       vec![data]
+    )
+  }
+
+  let user_query_str = format!("select 1 from users where email = '{}' and role = 'user'", body.email.to_owned());
+  let user_exist = check_data(state.db.clone(), user_query_str.as_str()).await;
+
+  if !user_exist {
+    return response_json(
+      String::from("failed"),
+      String::from("user not found or not a user"),
+      vec![]
     )
   }
 
@@ -55,9 +68,10 @@ pub async fn add_otp(state: web::Data<AppState>, body: web::Json<OTPSchema>) -> 
     delete_otp_data(state.db.clone(), token.to_owned()).await;
   }
 
-  let _ = insert_otp_data(state.db.clone(), token.to_owned(), otp.to_string(), body.email.to_owned()).await;  
+  let _ = insert_otp_data(state.db.clone(), token.to_owned(), otp.to_string(), body.email.to_owned()).await;
+  let email_body = create_html_body(otp.to_string(), name.to_string());
 
-  match send_email(reciever, String::from("Your OTP"), otp.to_string()).await {
+  match send_email(reciever, format!("{} is your verification code", otp.to_string()), ContentType::TEXT_HTML, email_body.into_string()).await {
     Ok(_) => response_json(
       String::from("success"),
       String::from("successfully send email"),
@@ -74,6 +88,7 @@ pub async fn add_otp(state: web::Data<AppState>, body: web::Json<OTPSchema>) -> 
   }
 }
 
+#[doc = "Update otp"]
 pub async fn update_otp(state: web::Data<AppState>, body: web::Json<DetailOTPSchema>) -> impl Responder {
   let validate_form = body.validate();
 
@@ -84,6 +99,17 @@ pub async fn update_otp(state: web::Data<AppState>, body: web::Json<DetailOTPSch
       String::from("failed"),
       String::from("please fill all fields"),
       vec![data]
+    )
+  }
+
+  let user_query_str = format!("select 1 from users where email = '{}' and role = 'user'", body.email.to_owned());
+  let user_exist = check_data(state.db.clone(), user_query_str.as_str()).await;
+
+  if !user_exist {
+    return response_json(
+      String::from("failed"),
+      String::from("user not found or not a user"),
+      vec![]
     )
   }
 
@@ -108,9 +134,10 @@ pub async fn update_otp(state: web::Data<AppState>, body: web::Json<DetailOTPSch
     delete_otp_data(state.db.clone(), token.to_owned()).await;
   }
 
-  let _ = insert_otp_data(state.db.clone(), token.to_owned(), otp.to_string(), body.email.to_owned()).await;  
+  let _ = insert_otp_data(state.db.clone(), token.to_owned(), otp.to_string(), body.email.to_owned()).await;
+  let email_body = create_html_body(otp.to_string(), name.to_string());
 
-  match send_email(reciever, String::from("Your OTP"), otp.to_string()).await {
+  match send_email(reciever, format!("{} is your verification code", otp.to_string()), ContentType::TEXT_HTML, email_body.into_string()).await {
     Ok(_) => response_json(
       String::from("success"),
       String::from("successfully send email"),
@@ -127,6 +154,7 @@ pub async fn update_otp(state: web::Data<AppState>, body: web::Json<DetailOTPSch
   }
 }
 
+#[doc = "Delete otp"]
 pub async fn delete_otp(state: web::Data<AppState>, body: web::Json<DetailOTPSchema>) -> impl Responder {
   let validate_form = body.validate();
 
@@ -160,6 +188,7 @@ pub async fn delete_otp(state: web::Data<AppState>, body: web::Json<DetailOTPSch
   }
 }
 
+#[doc = "Validate otp"]
 pub async fn validate_otp(state: web::Data<AppState>, body: web::Json<OTPVerificationSchema>) -> impl Responder {
   let validate_form = body.validate();
 
@@ -191,13 +220,21 @@ pub async fn validate_otp(state: web::Data<AppState>, body: web::Json<OTPVerific
 
             match fetch_user_data_by_email(state.db.clone(), body.email.to_owned()).await {
               Some(_) => {
-                let _ = update_verified_status(state.db.clone(), body.email.to_owned()).await;
+                let updated = update_verified_status(state.db.clone(), body.email.to_owned()).await.unwrap();
 
-                response_json(
-                  String::from("success"),
-                  String::from("successfully verified otp"),
-                  vec![]
-                )
+                if updated {
+                  response_json(
+                    String::from("success"),
+                    String::from("successfully verified otp"),
+                    vec![]
+                  )
+                } else {
+                  response_json(
+                    String::from("failed"),
+                    String::from("failed to verify otp"),
+                    vec![]
+                  )
+                }
               }
               None => response_json(
                 String::from("failed"),
