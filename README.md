@@ -87,6 +87,27 @@ Start the server (for production)
   cargo run --release
 ~~~
 
+Enabling auth service
+
+~~~bash  
+  cargo run --bin auth_service
+~~~
+
+Enabling export data
+
+~~~bash  
+  cargo run --bin export_data
+~~~
+
+Want to run all service and run for production?
+build all service and run it in release mode (run it from target/release)
+
+~~~bash  
+  cargo build --release
+  cargo build --release --bin export_data
+  cargo build --release --bin auth_service
+~~~
+
 ## Environment Variables  
 
 To run this project, you will need to add the following environment variables to your .env file  
@@ -109,6 +130,9 @@ To run this project, you will need to add the following environment variables to
 - [CSV Writer](https://docs.rs/csv/latest/csv/tutorial/index.html)
 - [XLSX Writer](https://docs.rs/xlsxwriter/latest/xlsxwriter)
 - [Argon2](https://docs.rs/rust-argon2/1.0.0/argon2)
+- [Maud](https://maud.lambda.xyz/getting-started.html)
+- [Tokenizer](https://docs.rs/tokenizers/0.13.3/tokenizers)
+- [Lettre](https://docs.rs/lettre/0.10.4/lettre)
 
 ## Feedback  
 
