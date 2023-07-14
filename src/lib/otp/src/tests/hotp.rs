@@ -8,10 +8,6 @@ pub fn test_create_hmac_otp() {
   let build = make_hmac_otp(secret, 0).unwrap();
   let build_again = make_hmac_otp(secret, 0).unwrap();
 
-  let token = "sarahpalastring";
-
-  println!("token: {:?}", token.as_bytes());
-
   assert_eq!(build, build_again);
 }
 
