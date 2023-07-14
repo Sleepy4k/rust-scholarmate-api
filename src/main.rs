@@ -7,8 +7,8 @@ use actix_web::{
   error,
   HttpServer,
   HttpResponse,
+  http::header,
   web::{Data, JsonConfig},
-  http::header::{self, HeaderValue},
   middleware::{Logger, DefaultHeaders}
 };
 
@@ -42,13 +42,7 @@ async fn main() -> anyhow::Result<()> {
 
   let _ = HttpServer::new(move || {
     let cors = Cors::default()
-      .allowed_origin_fn(|origin, _| {
-        let allowed_origin = env::var("CORS_ORIGIN").unwrap_or("http://localhost:3000".into());
-        [
-          HeaderValue::from_str(&allowed_origin).unwrap_or(HeaderValue::from_static("http://localhost:3000")),
-        ]
-        .contains(origin)
-      })
+      .allow_any_origin()
       .allowed_headers(vec![
         header::AUTHORIZATION,
         header::ACCEPT,
