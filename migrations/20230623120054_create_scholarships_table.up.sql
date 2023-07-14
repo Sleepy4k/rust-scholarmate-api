@@ -7,5 +7,5 @@ CREATE TABLE IF NOT EXISTS scholarships(
     requirement character varying NOT NULL,
     univ_id integer NOT NULL,
     PRIMARY KEY(id),
-    CONSTRAINT fk_schoolarships_universities FOREIGN key(univ_id) REFERENCES universities(id)
+    CONSTRAINT fk_schoolarships_universities FOREIGN key(univ_id) REFERENCES universities(id) ON UPDATE CASCADE ON DELETE CASCADE
 );

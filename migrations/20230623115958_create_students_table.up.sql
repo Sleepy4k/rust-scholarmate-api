@@ -11,7 +11,7 @@ CREATE TABLE IF NOT EXISTS students(
     toefl_score integer NOT NULL,
     ielts_score integer NOT NULL,
     PRIMARY KEY(id),
-    CONSTRAINT fk_students_users FOREIGN key(email) REFERENCES users(email)
+    CONSTRAINT fk_students_users FOREIGN key(email) REFERENCES users(email) ON UPDATE CASCADE ON DELETE CASCADE
 );
 CREATE UNIQUE INDEX email_1686980514290_index ON "students" USING btree ("email");
 CREATE UNIQUE INDEX phone_1686980521796_index ON "students" USING btree ("phone");

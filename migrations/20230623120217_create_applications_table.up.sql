@@ -6,6 +6,6 @@ CREATE TABLE IF NOT EXISTS applications(
     status character varying(255) NOT NULL,
     major character varying(255) NOT NULL,
     PRIMARY KEY(id),
-    CONSTRAINT fk_applications_universities FOREIGN key(univ_id) REFERENCES universities(id),
-    CONSTRAINT fk_applications_students FOREIGN key(student_id) REFERENCES students(id)
+    CONSTRAINT fk_applications_universities FOREIGN key(univ_id) REFERENCES universities(id) ON UPDATE CASCADE ON DELETE CASCADE,
+    CONSTRAINT fk_applications_students FOREIGN key(student_id) REFERENCES students(id) ON UPDATE CASCADE ON DELETE CASCADE
 );
