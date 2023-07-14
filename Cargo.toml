@@ -8,11 +8,10 @@ repository = "https://github.com/Sleepy4k/rust-scholarmate-api"
 edition = "2021"
 default-run = "scholarmate_api"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [workspace]
 
 [dependencies]
+actix = "0.13.0"
 tokio = { version = "1", features = ["full"] }
 anyhow = "1.0"
 time = "0.3.21"
@@ -20,6 +19,7 @@ serde_json = "1.0"
 serde = "1.0"
 actix-web = "4.2.1"
 actix-cors = "0.6.2"
+actix-web-actors = "4.2.0"
 dotenv = "0.15.0"
 sqlx = { version = "0.6.3", features = [ "runtime-actix-rustls", "postgres", "chrono", "offline" ] }
 env_logger = "0.10.0"
@@ -36,6 +36,7 @@ csv = "1.2"
 lettre = "0.10.4"
 tokenizers = "0.13.3"
 maud = "0.25.0"
+rand = "0.8.4"
 otp = { path = "src/lib/otp" }
 
 [dev-dependencies]
