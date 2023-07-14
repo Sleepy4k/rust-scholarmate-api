@@ -99,6 +99,12 @@ Enabling export data
   cargo run --bin export_data
 ~~~
 
+Enabling websocket service
+
+~~~bash  
+  cargo run --bin ws_service
+~~~
+
 Want to run all service and run for production?
 build all service and run it in release mode (run it from target/release)
 
@@ -106,6 +112,7 @@ build all service and run it in release mode (run it from target/release)
   cargo build --release
   cargo build --release --bin export_data
   cargo build --release --bin auth_service
+  cargo build --release --bin ws_service
 ~~~
 
 ## Environment Variables  
