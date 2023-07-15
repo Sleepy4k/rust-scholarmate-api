@@ -13,6 +13,12 @@ pub fn config(cfg: &mut web::ServiceConfig) {
     // welcome route
     .route("/", web::route().to(welcome))
 
+    // websocket route
+    .service(
+      web::scope("/ws")
+        .route("chat", web::get().to(chat_server))
+    )
+
     // otp route
     .service(
       web::scope("/chat")
