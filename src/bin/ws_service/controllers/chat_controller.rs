@@ -9,6 +9,7 @@ use crate::{
 
 use scholarmate_api::helpers::response::response_json;
 
+#[doc = "Get chat data"]
 pub async fn get_chat(state: web::Data<WSAppState>, body: web::Query<GeneralChatSchema>) -> impl Responder {
   let chats = fetch_room_data_by_user_id(state.db.clone(), body.uid.to_owned()).await;
 
@@ -19,6 +20,7 @@ pub async fn get_chat(state: web::Data<WSAppState>, body: web::Query<GeneralChat
   )
 }
 
+#[doc = "Add chat data"]
 pub async fn add_chat(state: web::Data<WSAppState>, body: web::Json<DetailChatSchema>) -> impl Responder {
   let members = format!("{},{}", body.sender, body.reciver);
   let chat = insert_room_data(state.db.clone(), body.name.to_owned(), members).await;
@@ -30,6 +32,7 @@ pub async fn add_chat(state: web::Data<WSAppState>, body: web::Json<DetailChatSc
   )
 }
 
+#[doc = "Find chat data"]
 pub async fn find_chat(state: web::Data<WSAppState>, body: web::Query<GeneralChatSchema>, path: web::Path<i32>) -> impl Responder {
   let room_id = path.into_inner();
 
@@ -63,6 +66,7 @@ pub async fn find_chat(state: web::Data<WSAppState>, body: web::Query<GeneralCha
   }
 }
 
+#[doc = "Delete chat data"]
 pub async fn delete_chat(state: web::Data<WSAppState>, body: web::Json<DetailChatSchema>, path: web::Path<i32>) -> impl Responder {
   let room_id = path.into_inner();
 
