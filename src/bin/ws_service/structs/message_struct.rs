@@ -8,6 +8,7 @@ use crate::structs::{
   main_struct::{Message, ListRooms}
 };
 
+#[doc = "ClientMessage is the struct that will be used to send message to the server from client."]
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct ClientMessage {
@@ -16,6 +17,7 @@ pub struct ClientMessage {
   pub room: String,
 }
 
+#[doc = "Join is the struct that will be used to join the server from client."]
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct Join {
@@ -23,6 +25,7 @@ pub struct Join {
   pub name: String,
 }
 
+#[doc = "ChatServer is the struct that will be used to chat server in websocket."]
 #[derive(Debug)]
 pub struct ChatServer {
   sessions: HashMap<i32, Recipient<Message>>,
@@ -31,6 +34,7 @@ pub struct ChatServer {
 }
 
 impl ChatServer {
+  #[doc = "new is the function that will be used to create new chat server."]
   pub fn new() -> ChatServer {
     let mut rooms = HashMap::new();
     rooms.insert("main".to_string(), HashSet::new());
@@ -42,6 +46,7 @@ impl ChatServer {
     }
   }
 
+  #[doc = "send_message is the function that will be used to send message to the server from client."]
   fn send_message(&self, room: &str, message: &str, skip_id: i32) {
     if let Some(sessions) = self.rooms.get(room) {
       for id in sessions {
@@ -62,6 +67,7 @@ impl Actor for ChatServer {
 impl Handler<Connect> for ChatServer {
   type Result = i32;
 
+  #[doc = "handle is the function that will be used to handle the connect message."]
   fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
     let id = self.rng.gen::<i32>();
     self.sessions.insert(id, msg.addr);
@@ -80,6 +86,7 @@ impl Handler<Connect> for ChatServer {
 impl Handler<Disconnect> for ChatServer {
   type Result = ();
 
+  #[doc = "handle is the function that will be used to handle the disconnect message."]
   fn handle(&mut self, msg: Disconnect, _: &mut Self::Context) -> Self::Result {
     let mut rooms: Vec<String> = vec![];
 
@@ -104,6 +111,7 @@ impl Handler<Disconnect> for ChatServer {
 impl Handler<ClientMessage> for ChatServer {
   type Result = ();
 
+  #[doc = "handle is the function that will be used to handle the client message."]
   fn handle(&mut self, msg: ClientMessage, _: &mut Self::Context) -> Self::Result {
     self.send_message(&msg.room, &msg.msg, msg.id);
   }
@@ -112,6 +120,7 @@ impl Handler<ClientMessage> for ChatServer {
 impl Handler<ListRooms> for ChatServer {
   type Result = MessageResult<ListRooms>;
 
+  #[doc = "handle is the function that will be used to handle the list rooms message."]
   fn handle(&mut self, _: ListRooms, _: &mut Self::Context) -> Self::Result {
     let mut rooms = vec![];
 
@@ -126,6 +135,7 @@ impl Handler<ListRooms> for ChatServer {
 impl Handler<Join> for ChatServer {
   type Result = ();
 
+  #[doc = "handle is the function that will be used to handle the join message."]
   fn handle(&mut self, msg: Join, _: &mut Self::Context) -> Self::Result {
     let Join {id, name} = msg;
     let mut rooms = vec![];

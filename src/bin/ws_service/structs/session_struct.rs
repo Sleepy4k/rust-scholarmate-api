@@ -4,8 +4,6 @@ use sqlx::{Pool, Postgres};
 use std::time::{Duration, Instant};
 use serde::{Deserialize, Serialize};
 
-use futures::FutureExt;
-
 use crate::{
   repositories::chat_repository::insert_chat_data,
   structs::{
@@ -18,6 +16,7 @@ use crate::{
 const HEARBEET: Duration = Duration::from_secs(5);
 const CLIENT_TIMEOUT: Duration = Duration::from_secs(10);
 
+#[doc = "WsChatSession is the struct that will be used to chat session in websocket."]
 #[derive(Debug)]
 pub struct WsChatSession {
   pub id: i32,
@@ -28,6 +27,7 @@ pub struct WsChatSession {
   pub db_pool: Pool<Postgres>,
 }
 
+#[doc = "ChatMessage is the struct that will be used to chat message in websocket."]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ChatMessage {
   pub id: i32,
@@ -39,6 +39,7 @@ pub struct ChatMessage {
 impl Actor for WsChatSession {
   type Context = ws::WebsocketContext<Self>;
 
+  #[doc = "started is the function that will be used to start the websocket chat session."]
   fn started(&mut self, ctx: &mut Self::Context) {
     self.hb(ctx);
 
@@ -59,6 +60,7 @@ impl Actor for WsChatSession {
       .wait(ctx);
   }
 
+  #[doc = "stopping is the function that will be used to stop the websocket chat session."]
   fn stopping(&mut self, _: &mut Self::Context) -> Running {
     self.addr.do_send(Disconnect { id: self.id });
     Running::Stop
@@ -68,16 +70,19 @@ impl Actor for WsChatSession {
 impl Handler<Message> for WsChatSession {
   type Result = ();
 
+  #[doc = "handle is the function that will be used to handle the message from client."]
   fn handle(&mut self, msg: Message, ctx: &mut Self::Context) -> Self::Result {
     ctx.text(msg.0);
   }
 }
 
+#[doc = "Insert chat data to database from websocket chat session."]
 async fn query_data(db_pool: Pool<Postgres>, chat_msg: ChatMessage) -> () {
   let _ = insert_chat_data(db_pool, chat_msg).await;
 }
 
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
+  #[doc = "handle is the function that will be used to handle the message from client."]
   fn handle(&mut self, item: Result<ws::Message, ws::ProtocolError>, ctx: &mut Self::Context) {
     let msg = match item {
       Err(_) => {
@@ -115,7 +120,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
           message: input.message.to_owned(),
         };
 
-        actix_web::rt::spawn(query_data(conn, chat_msg.clone()).map(|_| ()));
+        actix_web::rt::spawn(query_data(conn, chat_msg.clone()));
 
         let msg = serde_json::to_string(&chat_msg).unwrap();
 
@@ -143,6 +148,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
 }
 
 impl WsChatSession {
+  #[doc = "Heartbeat for websocket chat session."]
   fn hb(&self, ctx: &mut ws::WebsocketContext<Self>) {
     ctx.run_interval(HEARBEET, |act, ctx| {
       if Instant::now().duration_since(act.hb) > CLIENT_TIMEOUT {
