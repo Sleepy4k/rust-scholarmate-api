@@ -6,10 +6,12 @@ use lettre::message::{header::ContentType, MultiPart, SinglePart};
 
 #[doc = "Send email to student using smtp server"]
 pub async fn send_email(reciever: String, subject: String, header: ContentType, body: String) -> anyhow::Result<(), String> {
-  let smtp_email = env::var("SMTP_EMAIL").unwrap_or(String::from("Scholarmate <scholarmate@example.com>".to_owned()));
-  
+  let smtp_name = env::var("SMTP_NAME").unwrap_or(String::from("Scholarmate".to_owned()));
+  let smtp_email = env::var("SMTP_EMAIL").unwrap_or(String::from("scholarmate@example.com".to_owned()));
+  let smtp_sender = format!("{} <{}>", smtp_name, smtp_email);
+
   let email = Message::builder()
-    .from(smtp_email.parse().unwrap())
+    .from(smtp_sender.parse().unwrap())
     .to(reciever.parse().unwrap())
     .subject(subject)
     .multipart(
