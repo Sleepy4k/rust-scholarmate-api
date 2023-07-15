@@ -2,6 +2,12 @@ use std::env;
 use dotenv::dotenv;
 use serde_json::json;
 use actix_cors::Cors;
+use std::time::Duration;
+use rate_limit::{
+  RateLimiter,
+  MemoryStore,
+  MemoryStoreActor
+};
 use actix_web::{
   App,
   error,
@@ -39,6 +45,7 @@ async fn main() -> anyhow::Result<()> {
   println!("Server running at http://{}/", server_url.to_owned());
 
   let database = connect_postgres().await;
+  let rate_limitter = MemoryStore::new();
 
   let _ = HttpServer::new(move || {
     let cors = Cors::default()
@@ -81,11 +88,22 @@ async fn main() -> anyhow::Result<()> {
       .parse::<String>()
       .unwrap_or_else(|_| String::from("1.0.0"));
 
+    let rate_limit_max_requests = env::var("RATE_LIMIT_MAX_REQUEST")
+      .expect("RATE_LIMIT_MAX_REQUEST not set")
+      .parse::<usize>()
+      .unwrap_or(100);
+
+    let rate_limit_duration = env::var("RATE_LIMIT_WINDOW_MS")
+      .expect("RATE_LIMIT_WINDOW_MS not set")
+      .parse::<u64>()
+      .unwrap_or(60000);
+
     App::new()
       .wrap(cors)
       .wrap(Logger::default())
       .wrap(DefaultHeaders::new().add((app_name_slug.as_str(), app_version.as_str())))
       // .wrap(cookie::CheckCookie)
+      .wrap(RateLimiter::new(MemoryStoreActor::from(rate_limitter.clone()).start()).with_interval(Duration::from_millis(rate_limit_duration)).with_max_requests(rate_limit_max_requests))
       .app_data(json_config)
       .app_data(Data::new(main_struct::AppState { db: database.clone() }))
       .configure(routes::config)
