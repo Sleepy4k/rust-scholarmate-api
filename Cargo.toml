@@ -3,8 +3,12 @@ name = "scholarmate_api"
 version = "1.0.0"
 authors = ["Sleepy4k <sarahpalastrin@gmail.com>"]
 description = "an API service made for the needs of scholarship registration for students to ease the burden of registering for lectures"
-readme = "README.md"
+readme = "./README.md"
+homepage = "https://github.com/Sleepy4k/rust-scholarmate-api"
 repository = "https://github.com/Sleepy4k/rust-scholarmate-api"
+keywords = ["actix", "actix-web", "scholarmate"]
+categories = ["web-programming", "web-programming::http-server", "web-programming::http-client"]
+license = "MIT"
 edition = "2021"
 default-run = "scholarmate_api"
 
@@ -18,18 +22,18 @@ time = "0.3.21"
 serde_json = "1.0"
 serde = "1.0"
 actix-web = "4.2.1"
-actix-cors = "0.6.2"
+actix-cors = "0.6"
 actix-web-actors = "4.2.0"
 dotenv = "0.15.0"
-sqlx = { version = "0.6.3", features = [ "runtime-actix-rustls", "postgres", "chrono", "offline" ] }
+sqlx = { version = "0.7", features = [ "runtime-async-std", "tls-rustls", "postgres", "chrono" ] }
 env_logger = "0.10.0"
 lazy_static = "1.4"
 async_once = "0.2.6"
 chrono = { version = "0.4.22", features = ["serde"] }
 jsonwebtoken = "8.3.0"
 rust-argon2 = "1.0"
-futures-util = { version = "0.3.17", default-features = false, features = ["std"] }
-validator = { version = "0.16.1", features = ["derive"] }
+futures-util = { version = "0.3", default-features = false, features = ["std"] }
+validator = { version = "0.16", features = ["derive"] }
 xlsxwriter = "0.6.0"
 serde_merge = "0.1.3"
 csv = "1.2"
@@ -38,6 +42,7 @@ tokenizers = "0.13.3"
 maud = "0.25.0"
 rand = "0.8.4"
 otp = { path = "src/lib/otp" }
+rate_limit = { path = "src/lib/rate_limit" }
 
 [dev-dependencies]
 pretty_assertions = "1"
