@@ -76,13 +76,7 @@ pub async fn fetch_chat_data_by_room_id(pool: Pool<Postgres>, room_id: i32) -> V
       .map(|item| (item["id"].to_string(), item)),
   );
 
-  let chats_map: HashMap<String, Value> = HashMap::from_iter(
-    converted_chats
-      .into_iter()
-      .map(|item| (format!("{}-{}", item["room_id"].to_string(), item["id"].to_string()), item)),
-  );
-
-  let response_chats = rooms_data.into_iter().map(|room| {
+  let response_chats = rooms_data.into_iter().map(move |room| {
     let users = rooms_map
       .get(&room.id.to_string())
       .unwrap()
@@ -90,19 +84,7 @@ pub async fn fetch_chat_data_by_room_id(pool: Pool<Postgres>, room_id: i32) -> V
       .map(|id| users_map.get(id.to_owned()).unwrap().clone())
       .collect::<Vec<_>>();
    
-    let chats = rooms_map
-      .get(&room.id.to_string())
-      .unwrap()
-      .into_iter()
-      .map(|id| {
-        let chat = chats_map.get(&format!("{}-{}", room.id.to_string(), id.to_string()));
-
-        match chat {
-          Some(chat) => chat.clone(),
-          None => Value::Null
-        }
-      })
-      .collect::<Vec<_>>();
+    let chats = converted_chats.clone();
     return ChatResponseModel{ room, users, chats };
   }).collect::<Vec<_>>();
 
