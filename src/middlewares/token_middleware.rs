@@ -6,9 +6,9 @@ use actix_web::{Error, body::EitherBody, dev::{self, Service, ServiceRequest, Se
 
 use crate::{helpers::response::response_json, structs::auth_struct::TokenStruct};
 
-pub struct CheckCookie;
+pub struct CheckToken;
 
-impl<S, B> Transform<S, ServiceRequest> for CheckCookie
+impl<S, B> Transform<S, ServiceRequest> for CheckToken
 where
   S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
   S::Future: 'static,
@@ -17,18 +17,18 @@ where
   type Response = ServiceResponse<EitherBody<B>>;
   type Error = Error;
   type InitError = ();
-  type Transform = CheckCookieMiddleware<S>;
+  type Transform = CheckTokenMiddleware<S>;
   type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
   fn new_transform(&self, service: S) -> Self::Future {
-    ready(Ok(CheckCookieMiddleware { service }))
+    ready(Ok(CheckTokenMiddleware { service }))
   }
 }
-pub struct CheckCookieMiddleware<S> {
+pub struct CheckTokenMiddleware<S> {
   service: S,
 }
 
-impl<S, B> Service<ServiceRequest> for CheckCookieMiddleware<S>
+impl<S, B> Service<ServiceRequest> for CheckTokenMiddleware<S>
 where
   S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
   S::Future: 'static,
