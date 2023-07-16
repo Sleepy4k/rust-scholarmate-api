@@ -1,3 +1,4 @@
 - add data user verified at jwt token
 - validate user verified at middleware
 - add validation for ws chat service
+- fix middleware block web cors origin
