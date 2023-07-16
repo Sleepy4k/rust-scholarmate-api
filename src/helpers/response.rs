@@ -1,4 +1,4 @@
-use serde_json::Value;
+use serde_json::{Value, json};
 use actix_web::{HttpResponse, http::StatusCode};
 
 use crate::structs::response_struct::*;
@@ -28,16 +28,31 @@ fn setup_code(status: String) -> StatusCode {
 }
 
 #[doc = "Create a response template"]
+pub fn create_response(status: String, message: String, data: Value) -> HttpResponse {
+  let code = setup_code(status.to_owned());
+  let body = ResponseStruct {
+    status,
+    message,
+    data
+  };
+
+  HttpResponse::build(code)
+    .content_type("application/json")
+    .json(body)
+}
+
+#[doc = "Create a response template"]
+#[deprecated(note = "Please use create_response instead")]
 pub fn response_json(status: String, message: String, data: Vec<Value>) -> HttpResponse {
   // init response
   let code = setup_code(status.to_owned());
 
   // set response body
-  let body = ResponseStruct {
-    status,
-    message,
-    data,
-  };
+  let body = json!({
+    "status": status,
+    "message": message,
+    "data": data
+  });
 
   // return response
   HttpResponse::build(code)
@@ -64,12 +79,12 @@ pub fn response_json_with_cookie(status: String, message: String, data: Vec<Valu
   let code = setup_code(status.to_owned());
 
   // set response body
-  let body = ResponseCookieStruct {
-    status,
-    message,
-    data,
-    token,
-  };
+  let body = json!({
+    "status": status,
+    "token": token,
+    "message": message,
+    "data": data
+  });
 
   // return response
   HttpResponse::build(code)

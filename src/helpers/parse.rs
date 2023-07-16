@@ -4,8 +4,8 @@ use serde_json::{Value, to_value};
 use chrono::{Local, NaiveDateTime, format::strftime::StrftimeItems};
 
 #[doc = "Convert string to slug"]
-pub fn slugify(text: &str) -> String {
-  text.replace(" ", "-")
+pub fn slugify(text: &str, replacer: &str) -> String {
+  text.replace(" ", replacer)
 }
 
 #[doc = "function to convert value to string"]
