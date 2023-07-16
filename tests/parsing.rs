@@ -92,7 +92,7 @@ fn test_convert_vec_to_values_wrong_data() {
 #[doc(hidden)]
 fn test_string_to_slug() {
   let data = "John Doe";
-  let result = slugify(data);
+  let result = slugify(data, "-");
 
   assert_eq!(result, "John-Doe");
 }
