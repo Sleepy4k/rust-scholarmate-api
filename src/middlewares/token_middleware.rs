@@ -1,10 +1,25 @@
 use std::sync::Arc;
+use serde_json::json;
 use std::collections::HashSet;
 use std::future::{ready, Ready};
 use futures_util::future::LocalBoxFuture;
-use actix_web::{Error, body::EitherBody, dev::{self, Service, ServiceRequest, ServiceResponse, Transform}};
+use actix_web::{
+  Error,
+  body::EitherBody,
+  dev::{
+    self,
+    Service,
+    Transform,
+    ServiceRequest,
+    ServiceResponse
+  }
+};
 
-use crate::{helpers::response::response_json, structs::auth_struct::TokenStruct};
+use crate::{
+  structs::auth_struct::TokenStruct,
+  helpers::response::create_response,
+  enums::response_enum::ResponseDataEnum
+};
 
 pub struct CheckToken;
 
@@ -77,10 +92,10 @@ where
 
         if method == "POST" || method == "PUT" || method == "DELETE" {
           let req = request.into_parts().0;
-          let response = response_json(
-            "unauthorize".to_string(),
-            "you are not allowed to access this route".to_string(),
-            vec![]
+          let response = create_response(
+            String::from("forbidden"),
+            String::from("you are not allowed to access this route with your current role"),
+            ResponseDataEnum::SingleValue(json!({}))
           ).map_into_right_body();
       
           return Box::pin(async { Ok(ServiceResponse::new(req, response)) })
@@ -101,10 +116,10 @@ where
     }
 
     let req = request.into_parts().0;
-    let response = response_json(
-      "unauthorize".to_string(),
-      "please authorize your self as user".to_string(),
-      vec![]
+    let response = create_response(
+      String::from("unauthorized"),
+      String::from("please identify yourself as a user by providing a valid token"),
+      ResponseDataEnum::SingleValue(json!({}))
     ).map_into_right_body();
 
     return Box::pin(async { Ok(ServiceResponse::new(req, response)) })
