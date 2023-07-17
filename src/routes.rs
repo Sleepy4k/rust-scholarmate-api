@@ -12,7 +12,7 @@ pub fn service_config(cfg: &mut web::ServiceConfig) {
     .route("/user", web::get().to(get_user))
 
     // forum route
-    .route("/forum/{id}", web::get().to(get_forum))
+    .route("/forum/{id}", web::get().to(forum_show_controller))
 
     // university route
     .service(
