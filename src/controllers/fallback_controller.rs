@@ -1,22 +1,23 @@
 use serde_json::json;
 use actix_web::{HttpRequest, Responder};
 
-use crate::helpers::response::response_json;
+use crate::{
+  helpers::response::create_response,
+  enums::response_enum::ResponseDataEnum
+};
 
 #[doc = "Default route for all routes that are not defined"]
 pub async fn fallback(request: HttpRequest) -> impl Responder {
   let path = request.path().to_string();
   let method = request.method().to_string();
-  let data = vec![
-    json!({
-      "path": path,
-      "method": method
-    })
-  ];
+  let body = ResponseDataEnum::SingleValue(json!({
+    "path": path,
+    "method": method
+  }));
 
-  response_json(
-    "not found".to_string(),
-    "Path not found".to_string(),
-    data
+  create_response(
+    String::from("not found"),
+    String::from("route not found or not implemented"),
+    body
   )
 }
