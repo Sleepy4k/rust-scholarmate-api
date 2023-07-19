@@ -9,7 +9,7 @@ pub fn service_config(cfg: &mut web::ServiceConfig) {
     .route("/", web::route().to(welcome))
 
     // user route
-    .route("/user", web::get().to(get_user))
+    .route("/user", web::get().to(user_index_controller))
 
     // forum route
     .route("/forum/{id}", web::get().to(forum_show_controller))
@@ -17,46 +17,46 @@ pub fn service_config(cfg: &mut web::ServiceConfig) {
     // university route
     .service(
       web::scope("/university")
-        .route("", web::get().to(get_university))
-        .route("", web::post().to(add_university))
-        .route("/{id}", web::get().to(find_university))
-        .route("/{id}", web::put().to(update_university))
-        .route("/{id}", web::delete().to(delete_university))
+        .route("", web::get().to(university_index_controller))
+        .route("", web::post().to(university_store_controller))
+        .route("/{id}", web::get().to(university_show_controller))
+        .route("/{id}", web::put().to(university_update_controller))
+        .route("/{id}", web::delete().to(university_destroy_controller))
     )
 
     // scholarship route
     .service(
       web::scope("/scholarship")
-        .route("", web::get().to(get_scholarship))
-        .route("", web::post().to(add_scholarship))
-        .route("/{id}", web::get().to(find_scholarship))
-        .route("/{id}", web::put().to(update_scholarship))
-        .route("/{id}", web::delete().to(delete_scholarship))
+        .route("", web::get().to(scholarship_index_controller))
+        .route("", web::post().to(scholarship_store_controller))
+        .route("/{id}", web::get().to(scholarship_show_controller))
+        .route("/{id}", web::put().to(scholarship_update_controller))
+        .route("/{id}", web::delete().to(scholarship_destroy_controller))
     )
 
     // student route
     .service(
       web::scope("/student")
-        .route("", web::get().to(get_student))
-        .route("", web::post().to(add_student))
-        .route("/{id}", web::get().to(find_student))
-        .route("/{id}", web::put().to(update_student))
-        .route("/{id}", web::delete().to(delete_student))
+        .route("", web::get().to(student_index_controller))
+        .route("", web::post().to(student_store_controller))
+        .route("/{id}", web::get().to(student_show_controller))
+        .route("/{id}", web::put().to(student_update_controller))
+        .route("/{id}", web::delete().to(student_destroy_controller))
     )
 
     // application route
     .service(
       web::scope("/application")
-        .route("", web::get().to(get_application))
-        .route("", web::post().to(add_application))
-        .route("/{id}", web::get().to(get_my_application))
+        .route("", web::get().to(application_index_controller))
+        .route("", web::post().to(application_store_controller))
+        .route("/{id}", web::get().to(application_show_controller))
     )
 
     // apply route
     .service(
       web::scope("/apply")
-        .route("", web::post().to(add_student))
-        .route("/{id}", web::put().to(update_student))
+        .route("", web::post().to(student_store_controller))
+        .route("/{id}", web::put().to(student_update_controller))
     )
 
     // fallback route
