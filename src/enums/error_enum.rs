@@ -12,7 +12,7 @@ pub enum ErrorEnum {
   UnprocessableEntityError,
   ConflictError,
   ValidationError,
-  CustomError,
+  CustomError(String),
 }
 
 impl ErrorEnum {
@@ -27,7 +27,7 @@ impl ErrorEnum {
       ErrorEnum::UnprocessableEntityError => String::from("unprocessable entity error"),
       ErrorEnum::ConflictError => String::from("conflict error"),
       ErrorEnum::ValidationError => String::from("validation error"),
-      ErrorEnum::CustomError => String::from("custom error"),
+      ErrorEnum::CustomError(err) => err.to_string(),
     }
   }
 }
