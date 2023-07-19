@@ -1,19 +1,16 @@
-use serde_json::Value;
 use sqlx::{Pool, Postgres};
 
 use crate::{
-  models::auth_model::*,
-  helpers::parse::convert_vec_to_values
+  enums::error_enum::ErrorEnum,
+  models::auth_model::FilteredUserModel
 };
 
-#[doc = "Fetch all user data"]
-pub async fn fetch_user_data(pool: Pool<Postgres>) -> Vec<Value> {
-  let data = sqlx::query_as!(FilteredUserModel, "select id, email, role from users")
+#[doc = "Get all user data."]
+pub async fn get_user_data(pool: Pool<Postgres>) -> anyhow::Result<Vec<FilteredUserModel>, ErrorEnum> {
+  match sqlx::query_as!(FilteredUserModel, "select id, email, role from users")
     .fetch_all(&pool)
-    .await
-    .unwrap();
-
-  let result = convert_vec_to_values(data);
-
-  result
+    .await {
+      Ok(data) => Ok(data),
+      Err(_) => Err(ErrorEnum::InternalServerError)
+    }
 }

@@ -1,23 +1,16 @@
-use sqlx::{Pool, Postgres, postgres::PgRow};
+use sqlx::{Pool, Postgres};
 
-#[doc = "Fetch data"]
-pub async fn fetch_data(pool: Pool<Postgres>, query_str: &str) -> Vec<PgRow> {
-  let query_string = format!("{}", query_str);
-  let data = sqlx::query(query_string.as_str())
-    .fetch_all(&pool)
-    .await
-    .unwrap();
+use crate::enums::error_enum::ErrorEnum;
 
-  data
-}
-
-#[doc = "Check data"]
-pub async fn check_data(pool: Pool<Postgres>, query_str: &str) -> bool {
+#[doc = "Check data exist or not"]
+pub async fn check_data(pool: Pool<Postgres>, query_str: &str) -> anyhow::Result<bool, ErrorEnum> {
   let query_string = format!("select exists({}) as data_exists", query_str);
-  let query = sqlx::query_scalar::<_, bool>(query_string.as_str())
+
+  match sqlx::query_scalar::<_, bool>(query_string.as_str())
     .fetch_one(&pool)
     .await
-    .unwrap();
-
-  query
+  {
+    Ok(query) => Ok(query),
+    Err(_) => Err(ErrorEnum::InternalServerError),
+  }
 }
