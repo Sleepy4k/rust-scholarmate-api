@@ -15,8 +15,6 @@ lazy_static! {
 pub async fn open_postgres() -> PgPool {
   let database_url = env::var("DATABASE_URL")
     .unwrap_or_else(|_| String::from("postgres://postgres:postgres@localhost:5137/postgres"));
-  
-  println!("database connect to {}", database_url);
 
   let pool = match PgPoolOptions::new()
     .max_connections(10)

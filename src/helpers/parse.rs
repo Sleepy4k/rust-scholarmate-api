@@ -38,6 +38,11 @@ pub fn convert_vec_to_values<T: Serialize>(data: Vec<T>) -> Vec<Value> {
   data.into_iter().map(|item| to_value(item).unwrap()).collect()
 }
 
+#[doc = "function to convert any struct to json"]
+pub fn convert_struct_to_value<T: Serialize>(data: T) -> Value {
+  to_value(data).unwrap()
+}
+
 #[doc = "Get email parts"]
 pub fn get_email_parts(email: &str) -> Vec<&str> {
   let email_parts = email.split("@").collect::<Vec<&str>>();
