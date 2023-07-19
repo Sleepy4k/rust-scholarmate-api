@@ -1,157 +1,194 @@
-use serde_json::Value;
 use validator::Validate;
+use serde_json::{Value, json};
 use actix_web::{web, Responder};
 
 use crate::{
   schemas::university_schema::*,
   structs::main_struct::AppState,
-  helpers::{
-    response::response_json,
-    parse::convert_vec_to_values
-  },
-  repositories::{
-    university_repository::*,
-    main_repository::check_data
+  services::university_service::*,
+  helpers::response::create_response,
+  enums::{
+    error_enum::ErrorEnum,
+    response_enum::ResponseDataEnum
   }
 };
 
-#[doc = "Get all university"]
-pub async fn get_university(state: web::Data<AppState>) -> impl Responder {
-  let data = fetch_university_data(state.db.to_owned()).await;
-
-  response_json(
-    "success".to_string(),
-    "Successfully retrieved university".to_string(),
-    data
-  )
-}
-
-#[doc = "Add new university"]
-pub async fn add_university(state: web::Data<AppState>, body: web::Json<UniversitySchema>) -> impl Responder {
-  let validate_form = body.validate();
-
-  if validate_form.is_err() {
-    let data = Value::from(validate_form.err().unwrap().to_string());
-
-    return response_json(
-      "failed".to_string(),
-      "Please fill all fields".to_string(),
-      vec![data]
-    )
-  }
-
-  let query_str = format!("select 1 from universities where name = '{}' and major = '{}'", body.name, body.major);
-  let univ_exists = check_data(state.db.clone(), query_str.as_str()).await;
-
-  if univ_exists {
-    return response_json(
-      "failed".to_string(),
-      "University already exist".to_string(),
-      vec![]
-    )
-  }
-
-  let data = insert_university_data(state.db.clone(), body.into_inner()).await;
-
-  response_json(
-    "success".to_string(),
-    "Successfully added university".to_string(),
-    data
-  )
-}
-
-#[doc = "Find university by id"]
-pub async fn find_university(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
-  let id = path.into_inner();
-
-  match fetch_university_data_by_id(state.db.to_owned(), id).await {
-    Some(univ_data) => {
-      let convert_to_vec = vec![univ_data];
-      let data = convert_vec_to_values(convert_to_vec);
-
-      return response_json(
-        "success".to_string(),
-        "Successfully retrieved university".to_string(),
+#[doc = "Display a listing of the resource."]
+pub async fn university_index_controller(state: web::Data<AppState>) -> impl Responder {
+  match university_index_service(state.db.to_owned()).await {
+    Ok(data) => {
+      create_response(
+        String::from("success"),
+        String::from("successfully retrieved university data"),
         data
       )
     },
-    None => return response_json(
-      "failed".to_string(),
-      "University not found".to_string(),
-      vec![]
-    )
+    Err(err) => {
+      match err {
+        ErrorEnum::CustomError(message) => {
+          create_response(
+            String::from("unprocessable entity"),
+            message,
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        },
+        _ => {
+          create_response(
+            String::from("internal server error"),
+            err.get_error(),
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        }
+      }
+    }
   }
 }
 
-#[doc = "Update university by id"]
-pub async fn update_university(state: web::Data<AppState>, body: web::Json<UniversitySchema>, path: web::Path<i32>) -> impl Responder {
+#[doc = "Store a newly created resource in storage."]
+pub async fn university_store_controller(state: web::Data<AppState>, body: web::Json<UniversitySchema>) -> impl Responder {
+  let validate_form = body.validate();
+
+  if validate_form.is_err() {
+    let data = Value::from(validate_form.err().unwrap().to_string());
+
+    return create_response(
+      String::from("unprocessable entity"),
+      String::from("please fill all fields"),
+      ResponseDataEnum::SingleValue(data)
+    )
+  }
+
+  match university_store_service(state.db.to_owned(), body.into_inner()).await {
+    Ok(data) => {
+      create_response(
+        String::from("success"),
+        String::from("successfully created university data"),
+        data
+      )
+    },
+    Err(err) => {
+      match err {
+        ErrorEnum::CustomError(message) => {
+          create_response(
+            String::from("unprocessable entity"),
+            message,
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        },
+        _ => {
+          create_response(
+            String::from("internal server error"),
+            err.get_error(),
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        }
+      }
+    }
+  }
+}
+
+#[doc = "Display the specified resource."]
+pub async fn university_show_controller(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
+  match university_show_service(state.db.to_owned(), path.into_inner()).await {
+    Ok(data) => {
+      create_response(
+        String::from("success"),
+        String::from("successfully retrieved university data"),
+        data
+      )
+    },
+    Err(err) => {
+      match err {
+        ErrorEnum::CustomError(message) => {
+          create_response(
+            String::from("unprocessable entity"),
+            message,
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        },
+        _ => {
+          create_response(
+            String::from("internal server error"),
+            err.get_error(),
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        }
+      }
+    }
+  }
+}
+
+#[doc = "Update the specified resource in storage."]
+pub async fn university_update_controller(state: web::Data<AppState>, body: web::Json<UniversitySchema>, path: web::Path<i32>) -> impl Responder {
   let id = path.into_inner();
   let validate_form = body.validate();
 
   if validate_form.is_err() {
     let data = Value::from(validate_form.err().unwrap().to_string());
 
-    return response_json(
-      "failed".to_string(),
-      "Please fill all fields".to_string(),
-      vec![data]
+    return create_response(
+      String::from("unprocessable entity"),
+      String::from("please fill all fields"),
+      ResponseDataEnum::SingleValue(data)
     )
   }
 
-  let query_str = format!("select 1 from universities where id = '{}'", id);
-  let univ_exists = check_data(state.db.clone(), query_str.as_str()).await;
-
-  if !univ_exists {
-    return response_json(
-      "failed".to_string(),
-      "University not found".to_string(),
-      vec![]
-    )
-  }
-
-  match fetch_university_data_by_exists_column(state.db.clone(), body.name.to_owned(), body.major.to_owned()).await {
-    Some(univ_data) => {
-      if univ_data.id != id {
-        return response_json(
-          "failed".to_string(),
-          "University already exists".to_string(),
-          vec![]
-        )
-      } else {
-        ()
-      }
+  match university_update_service(state.db.to_owned(), id, body.into_inner()).await {
+    Ok(data) => {
+      create_response(
+        String::from("success"),
+        String::from("successfully updated university data"),
+        data
+      )
     },
-    None => ()
-  };
-
-  let data = update_university_data(state.db.clone(), id, body.into_inner()).await;
-
-  response_json(
-    "success".to_string(),
-    "Successfully updated university".to_string(),
-    data
-  )
+    Err(err) => {
+      match err {
+        ErrorEnum::CustomError(message) => {
+          create_response(
+            String::from("unprocessable entity"),
+            message,
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        },
+        _ => {
+          create_response(
+            String::from("internal server error"),
+            err.get_error(),
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        }
+      }
+    }
+  }
 }
 
-#[doc = "Delete university by id"]
-pub async fn delete_university(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
-  let id = path.into_inner();
-  let query_str = format!("select 1 from universities where id = '{}'", id);
-  let univ_exists = check_data(state.db.clone(), query_str.as_str()).await;
-
-  if !univ_exists {
-    return response_json(
-      "failed".to_string(),
-      "University not found".to_string(),
-      vec![]
-    )
+#[doc = "Remove the specified resource from storage."]
+pub async fn university_destroy_controller(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
+  match university_destroy_service(state.db.to_owned(), path.into_inner()).await {
+    Ok(data) => {
+      create_response(
+        String::from("success"),
+        String::from("successfully deleted university data"),
+        data
+      )
+    },
+    Err(err) => {
+      match err {
+        ErrorEnum::CustomError(message) => {
+          create_response(
+            String::from("unprocessable entity"),
+            message,
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        },
+        _ => {
+          create_response(
+            String::from("internal server error"),
+            err.get_error(),
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        }
+      }
+    }
   }
-
-  let data = delete_university_data(state.db.clone(), id).await;
-
-  response_json(
-    "success".to_string(),
-    "Successfully deleted university".to_string(),
-    data
-  )
 }

@@ -28,7 +28,7 @@ pub async fn forum_show_controller(state: web::Data<AppState>, path: web::Path<i
     },
     Err(err) => {
       create_response(
-        String::from("not found"),
+        String::from("internal server error"),
         err.get_error(),
         ResponseDataEnum::SingleValue(json!({}))
       )

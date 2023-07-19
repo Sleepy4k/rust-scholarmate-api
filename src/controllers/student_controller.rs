@@ -1,159 +1,194 @@
-use serde_json::Value;
 use validator::Validate;
+use serde_json::{Value, json};
 use actix_web::{web, Responder};
 
 use crate::{
   schemas::student_schema::*,
+  services::student_service::*,
   structs::main_struct::AppState,
-  repositories::{
-    student_repository::*,
-    main_repository::check_data
-  },
-  helpers::{
-    response::response_json,
-    parse::convert_vec_to_values
+  helpers::response::create_response,
+  enums::{
+    error_enum::ErrorEnum,
+    response_enum::ResponseDataEnum
   }
 };
 
-#[doc = "Get all student"]
-pub async fn get_student(state: web::Data<AppState>) -> impl Responder {
-  let data = fetch_student_data(state.db.to_owned()).await;
-
-  response_json(
-    "success".to_string(),
-    "Successfully retrieved student".to_string(),
-    data
-  )
-}
-
-#[doc = "Add new student"]
-pub async fn add_student(state: web::Data<AppState>, body: web::Json<StudentSchema>) -> impl Responder {
-  let validate_form = body.validate();
-
-  if validate_form.is_err() {
-    let data = Value::from(validate_form.err().unwrap().to_string());
-
-    return response_json(
-      "failed".to_string(),
-      "Please fill all fields".to_string(),
-      vec![data]
-    )
-  }
-
-  let query_str = format!("select 1 from students where email = '{}' or phone = '{}' or register_number = '{}'", body.email, body.phone, body.register_number);
-  let student_exist = check_data(state.db.clone(), query_str.as_str()).await;
-
-  if student_exist {
-    return response_json(
-      "failed".to_string(),
-      "Student already exist".to_string(),
-      vec![]
-    )
-  }
-
-  let data = insert_student_data(state.db.clone(), body.into_inner()).await;
-
-  response_json(
-    "success".to_string(),
-    "Successfully added student".to_string(),
-    data
-  )
-}
-
-#[doc = "Find student by id"]
-pub async fn find_student(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
-  let id = path.into_inner();
-
-  match fetch_student_data_by_id(state.db.to_owned(), id).await {
-    Some(student_data) => {
-      let convert_to_vec = vec![student_data];
-      let data = convert_vec_to_values(convert_to_vec);
-
-      return response_json(
-        "success".to_string(),
-        "Successfully retrieved student".to_string(),
+#[doc = "Display a listing of the resource."]
+pub async fn student_index_controller(state: web::Data<AppState>) -> impl Responder {
+  match student_index_service(state.db.to_owned()).await {
+    Ok(data) => {
+      create_response(
+        String::from("success"),
+        String::from("successfully retrieved student data"),
         data
       )
     },
-    None => {
-      return response_json(
-        "failed".to_string(),
-        "Student not found".to_string(),
-        vec![]
-      )
+    Err(err) => {
+      match err {
+        ErrorEnum::CustomError(message) => {
+          create_response(
+            String::from("unprocessable entity"),
+            message,
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        },
+        _ => {
+          create_response(
+            String::from("internal server error"),
+            err.get_error(),
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        }
+      }
     }
-  };
+  }
 }
 
-#[doc = "Update student by id"]
-pub async fn update_student(state: web::Data<AppState>, body: web::Json<StudentSchema>, path: web::Path<i32>) -> impl Responder {
+#[doc = "Store a newly created resource in storage."]
+pub async fn student_store_controller(state: web::Data<AppState>, body: web::Json<StudentSchema>) -> impl Responder {
+  let validate_form = body.validate();
+
+  if validate_form.is_err() {
+    let data = Value::from(validate_form.err().unwrap().to_string());
+
+    return create_response(
+      String::from("unprocessable entity"),
+      String::from("please fill all fields"),
+      ResponseDataEnum::SingleValue(data)
+    )
+  }
+
+  match student_store_service(state.db.to_owned(), body.into_inner()).await {
+    Ok(data) => {
+      create_response(
+        String::from("success"),
+        String::from("successfully created student data"),
+        data
+      )
+    },
+    Err(err) => {
+      match err {
+        ErrorEnum::CustomError(message) => {
+          create_response(
+            String::from("unprocessable entity"),
+            message,
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        },
+        _ => {
+          create_response(
+            String::from("internal server error"),
+            err.get_error(),
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        }
+      }
+    }
+  }
+}
+
+#[doc = "Display the specified resource."]
+pub async fn student_show_controller(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
+  match student_show_service(state.db.to_owned(), path.into_inner()).await {
+    Ok(data) => {
+      create_response(
+        String::from("success"),
+        String::from("successfully retrieved student data"),
+        data
+      )
+    },
+    Err(err) => {
+      match err {
+        ErrorEnum::CustomError(message) => {
+          create_response(
+            String::from("unprocessable entity"),
+            message,
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        },
+        _ => {
+          create_response(
+            String::from("internal server error"),
+            err.get_error(),
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        }
+      }
+    }
+  }
+}
+
+#[doc = "Update the specified resource in storage."]
+pub async fn student_update_controller(state: web::Data<AppState>, body: web::Json<StudentSchema>, path: web::Path<i32>) -> impl Responder {
   let id = path.into_inner();
   let validate_form = body.validate();
 
   if validate_form.is_err() {
     let data = Value::from(validate_form.err().unwrap().to_string());
 
-    return response_json(
-      "failed".to_string(),
-      "Please fill all fields".to_string(),
-      vec![data]
+    return create_response(
+      String::from("unprocessable entity"),
+      String::from("please fill all fields"),
+      ResponseDataEnum::SingleValue(data)
     )
   }
 
-  let query_str = format!("select 1 from students where id = '{}'", id);
-  let student_exist = check_data(state.db.clone(), query_str.as_str()).await;
-
-  if !student_exist {
-    return response_json(
-      "failed".to_string(),
-      "Student not found".to_string(),
-      vec![]
-    )
-  }
-
-  match fetch_student_data_by_exists_column(state.db.clone(), body.email.to_owned(), body.phone.to_owned(), body.register_number.to_owned()).await {
-    Some(student_data) => {
-      if student_data.id != id {
-        return response_json(
-          "failed".to_string(),
-          "Student already exists".to_string(),
-          vec![]
-        )
-      } else {
-        ()
-      }
+  match student_update_service(state.db.to_owned(), id, body.into_inner()).await {
+    Ok(data) => {
+      create_response(
+        String::from("success"),
+        String::from("successfully updated student data"),
+        data
+      )
     },
-    None => ()
-  };
-
-  let data = update_student_data_by_id(state.db.clone(), id, body.into_inner()).await;
-
-  response_json(
-    "success".to_string(),
-    "Successfully updated student".to_string(),
-    data
-  )
+    Err(err) => {
+      match err {
+        ErrorEnum::CustomError(message) => {
+          create_response(
+            String::from("unprocessable entity"),
+            message,
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        },
+        _ => {
+          create_response(
+            String::from("internal server error"),
+            err.get_error(),
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        }
+      }
+    }
+  }
 }
 
-#[doc = "Delete student by id"]
-pub async fn delete_student(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
-  let id = path.into_inner();
-  let query_str = format!("select 1 from students where id = '{}'", id);
-  let student_exist = check_data(state.db.clone(), query_str.as_str()).await;
-
-  if !student_exist {
-    return response_json(
-      "failed".to_string(),
-      "Student not found".to_string(),
-      vec![]
-    )
+#[doc = "Remove the specified resource from storage."]
+pub async fn student_destroy_controller(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
+  match student_destroy_service(state.db.to_owned(), path.into_inner()).await {
+    Ok(data) => {
+      create_response(
+        String::from("success"),
+        String::from("successfully deleted student data"),
+        data
+      )
+    },
+    Err(err) => {
+      match err {
+        ErrorEnum::CustomError(message) => {
+          create_response(
+            String::from("unprocessable entity"),
+            message,
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        },
+        _ => {
+          create_response(
+            String::from("internal server error"),
+            err.get_error(),
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        }
+      }
+    }
   }
-
-  let data = delete_student_data_by_id(state.db.clone(), id).await;
-
-  response_json(
-    "success".to_string(),
-    "Successfully deleted student".to_string(),
-    data
-  )
 }

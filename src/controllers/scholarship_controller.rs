@@ -1,144 +1,194 @@
-use serde_json::Value;
 use validator::Validate;
+use serde_json::{Value, json};
 use actix_web::{web, Responder};
 
 use crate::{
   schemas::scholarship_schema::*,
   structs::main_struct::AppState,
-  helpers::{
-    response::response_json,
-    parse::convert_vec_to_values
-  },
-  repositories::{
-    scholarship_repository::*,
-    main_repository::check_data
+  services::scholarship_service::*,
+  helpers::response::create_response,
+  enums::{
+    error_enum::ErrorEnum,
+    response_enum::ResponseDataEnum
   }
 };
 
-#[doc = "Get all scholarship"]
-pub async fn get_scholarship(state: web::Data<AppState>) -> impl Responder {
-  let data = fetch_scholarship_data(state.db.to_owned()).await;
-
-  response_json(
-    "success".to_string(),
-    "Successfully retrieved scholarship".to_string(),
-    data
-  )
-}
-
-#[doc = "Add new scholarship"]
-pub async fn add_scholarship(state: web::Data<AppState>, body: web::Json<ScholarshipSchema>) -> impl Responder {
-  let validate_form = body.validate();
-
-  if validate_form.is_err() {
-    let data = Value::from(validate_form.err().unwrap().to_string());
-
-    return response_json(
-      "failed".to_string(),
-      "Please fill all fields".to_string(),
-      vec![data]
-    )
-  }
-
-  let query_str = format!("select 1 from scholarships where name = '{}'", body.name);
-  let scholarship_exists = check_data(state.db.clone(), query_str.as_str()).await;
-
-  if scholarship_exists {
-    return response_json(
-      "failed".to_string(),
-      "Scholarship already exists".to_string(),
-      vec![]
-    )
-  }
-
-  let data = insert_scholarship_data(state.db.to_owned(), body.into_inner()).await;
-
-  response_json(
-    "success".to_string(),
-    "Successfully added scholarship".to_string(),
-    data
-  )
-}
-
-#[doc = "Find scholarship by id"]
-pub async fn find_scholarship(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
-  let id = path.into_inner();
-
-  match fetch_scholarship_data_by_id(state.db.to_owned(), id).await {
-    Some(scholarship_data) => {
-      let convert_to_vec = vec![scholarship_data];
-      let data = convert_vec_to_values(convert_to_vec);
-
-      return response_json(
-        "success".to_string(),
-        "Successfully retrieved scholarship".to_string(),
+#[doc = "Display a listing of the resource."]
+pub async fn scholarship_index_controller(state: web::Data<AppState>) -> impl Responder {
+  match scholarship_index_service(state.db.to_owned()).await {
+    Ok(data) => {
+      create_response(
+        String::from("success"),
+        String::from("successfully retrieved scholarship data"),
         data
       )
     },
-    None => {
-      return response_json(
-        "failed".to_string(),
-        "Scholarship not found".to_string(),
-        vec![]
-      )
+    Err(err) => {
+      match err {
+        ErrorEnum::CustomError(message) => {
+          create_response(
+            String::from("unprocessable entity"),
+            message,
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        },
+        _ => {
+          create_response(
+            String::from("internal server error"),
+            err.get_error(),
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        }
+      }
     }
   }
 }
 
-#[doc = "Update scholarship by id"]
-pub async fn update_scholarship(state: web::Data<AppState>, body: web::Json<ScholarshipSchema>, path: web::Path<i32>) -> impl Responder {
+#[doc = "Store a newly created resource in storage."]
+pub async fn scholarship_store_controller(state: web::Data<AppState>, body: web::Json<ScholarshipSchema>) -> impl Responder {
+  let validate_form = body.validate();
+
+  if validate_form.is_err() {
+    let data = Value::from(validate_form.err().unwrap().to_string());
+
+    return create_response(
+      String::from("unprocessable entity"),
+      String::from("please fill all fields"),
+      ResponseDataEnum::SingleValue(data)
+    )
+  }
+
+  match scholarship_store_service(state.db.to_owned(), body.into_inner()).await {
+    Ok(data) => {
+      create_response(
+        String::from("success"),
+        String::from("successfully created scholarship data"),
+        data
+      )
+    },
+    Err(err) => {
+      match err {
+        ErrorEnum::CustomError(message) => {
+          create_response(
+            String::from("unprocessable entity"),
+            message,
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        },
+        _ => {
+          create_response(
+            String::from("internal server error"),
+            err.get_error(),
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        }
+      }
+    }
+  }
+}
+
+#[doc = "Display the specified resource."]
+pub async fn scholarship_show_controller(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
+  match scholarship_show_service(state.db.to_owned(), path.into_inner()).await {
+    Ok(data) => {
+      create_response(
+        String::from("success"),
+        String::from("successfully retrieved scholarship data"),
+        data
+      )
+    },
+    Err(err) => {
+      match err {
+        ErrorEnum::CustomError(message) => {
+          create_response(
+            String::from("unprocessable entity"),
+            message,
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        },
+        _ => {
+          create_response(
+            String::from("internal server error"),
+            err.get_error(),
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        }
+      }
+    }
+  }
+}
+
+#[doc = "Update the specified resource in storage."]
+pub async fn scholarship_update_controller(state: web::Data<AppState>, body: web::Json<ScholarshipSchema>, path: web::Path<i32>) -> impl Responder {
   let id = path.into_inner();
   let validate_form = body.validate();
 
   if validate_form.is_err() {
     let data = Value::from(validate_form.err().unwrap().to_string());
 
-    return response_json(
-      "failed".to_string(),
-      "Please fill all fields".to_string(),
-      vec![data]
+    return create_response(
+      String::from("unprocessable entity"),
+      String::from("please fill all fields"),
+      ResponseDataEnum::SingleValue(data)
     )
   }
 
-  let query_str = format!("select 1 from scholarships where id = '{}'", id);
-  let scholarship_exists = check_data(state.db.clone(), query_str.as_str()).await;
-
-  if !scholarship_exists {
-    return response_json(
-      "failed".to_string(),
-      "Scholarship not found".to_string(),
-      vec![]
-    )
+  match scholarship_update_service(state.db.to_owned(), id, body.into_inner()).await {
+    Ok(data) => {
+      create_response(
+        String::from("success"),
+        String::from("successfully updated scholarship data"),
+        data
+      )
+    },
+    Err(err) => {
+      match err {
+        ErrorEnum::CustomError(message) => {
+          create_response(
+            String::from("unprocessable entity"),
+            message,
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        },
+        _ => {
+          create_response(
+            String::from("internal server error"),
+            err.get_error(),
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        }
+      }
+    }
   }
-
-  let data = update_scholarship_data(state.db.to_owned(), id, body.into_inner()).await;
-
-  response_json(
-    "success".to_string(),
-    "Successfully updated scholarship".to_string(),
-    data
-  )
 }
 
-#[doc = "Delete scholarship by id"]
-pub async fn delete_scholarship(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
-  let id = path.into_inner();
-  let query_str = format!("select 1 from scholarships where id = '{}'", id);
-  let scholarship_exists = check_data(state.db.clone(), query_str.as_str()).await;
-
-  if !scholarship_exists {
-    return response_json(
-      "failed".to_string(),
-      "Scholarship not found".to_string(),
-      vec![]
-    )
+#[doc = "Remove the specified resource from storage."]
+pub async fn scholarship_destroy_controller(state: web::Data<AppState>, path: web::Path<i32>) -> impl Responder {
+  match scholarship_destroy_service(state.db.to_owned(), path.into_inner()).await {
+    Ok(data) => {
+      create_response(
+        String::from("success"),
+        String::from("successfully deleted scholarship data"),
+        data
+      )
+    },
+    Err(err) => {
+      match err {
+        ErrorEnum::CustomError(message) => {
+          create_response(
+            String::from("unprocessable entity"),
+            message,
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        },
+        _ => {
+          create_response(
+            String::from("internal server error"),
+            err.get_error(),
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        }
+      }
+    }
   }
-
-  let data = delete_scholarship_data(state.db.to_owned(), id).await;
-
-  response_json(
-    "success".to_string(),
-    "Successfully deleted scholarship".to_string(),
-    data
-  )
 }
