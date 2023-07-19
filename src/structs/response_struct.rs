@@ -17,13 +17,3 @@ pub struct ResponseStructWithToken {
   pub message: String,
   pub data: Value,
 }
-
-#[doc = "Response struct with token"]
-#[deprecated(note = "Please use ResponseStructWithToken instead")]
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ResponseCookieStruct {
-  pub status: String,
-  pub message: String,
-  pub data: Value,
-  pub token: String,
-}
