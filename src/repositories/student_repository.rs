@@ -17,7 +17,7 @@ pub async fn get_student_data(pool: Pool<Postgres>) -> anyhow::Result<Vec<Studen
     }
 }
 
-#[doc = "Create an student data."]
+#[doc = "Create a student data."]
 pub async fn create_student_data(pool: Pool<Postgres>, body: StudentSchema) -> anyhow::Result<StudentModel, ErrorEnum> {
   let dob = NaiveDate::parse_from_str(body.date_of_birth.to_owned().as_str(), "%Y-%m-%d").unwrap();
   
@@ -33,7 +33,7 @@ pub async fn create_student_data(pool: Pool<Postgres>, body: StudentSchema) -> a
     }
 }
 
-#[doc = "Find an student data by id."]
+#[doc = "Find a student data by id."]
 pub async fn find_student_data(pool: Pool<Postgres>, id: i32) -> anyhow::Result<StudentModel, ErrorEnum> {
   match sqlx::query_as!(StudentModel, "select * from students where id = $1 limit 1", id)
     .fetch_optional(&pool)
@@ -48,7 +48,7 @@ pub async fn find_student_data(pool: Pool<Postgres>, id: i32) -> anyhow::Result<
     }
 }
 
-#[doc = "Find an student data by exists column."]
+#[doc = "Find a student data by exists column."]
 pub async fn find_student_data_by_exists_column(pool: Pool<Postgres>, email: String, phone: String, register_number: String) -> anyhow::Result<StudentModel, ErrorEnum> {
   match sqlx::query_as!(StudentModel, "select * from students where email = $1 or phone = $2 or register_number = $3 limit 1", email, phone, register_number)
     .fetch_optional(&pool)
