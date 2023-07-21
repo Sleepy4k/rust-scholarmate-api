@@ -1,3 +1,5 @@
+extern crate argon2;
+
 use dotenv::dotenv;
 use std::net::TcpListener;
 
