@@ -52,7 +52,7 @@ where
     RateLimiter {
       interval: Duration::from_secs(0),
       max_requests: 0,
-      store: store,
+      store,
       identifier: Rc::new(Box::new(identifier)),
     }
   }
