@@ -41,6 +41,7 @@ lettre = "0.10.4"
 tokenizers = "0.13.3"
 maud = "0.25.0"
 rand = "0.8.4"
+regex = "1.4"
 otp = { path = "src/lib/otp" }
 rate_limit = { path = "src/lib/rate_limit" }
 
