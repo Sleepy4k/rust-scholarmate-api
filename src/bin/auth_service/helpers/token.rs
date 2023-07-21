@@ -1,17 +1,26 @@
-use tokenizers::tokenizer::{Result, Tokenizer};
+use rand::Rng;
+use chrono::prelude::*;
 
 #[doc = "generate token from string"]
-pub async fn generate_token(identifier: &str, data: String) -> Result<Vec<u32>> {
-  let tokenizer = Tokenizer::from_pretrained(identifier, None)?;
-  let tokens = tokenizer.encode(data, false)?;
+pub async fn generate_token(data: String) -> Vec<u32> {
+  let mut token = Vec::new();
+  let mut rng = rand::thread_rng();
+  let mut counter = 0;
 
-  Ok(tokens.get_ids().to_vec())
-}
+  while counter < 6 {
+    let random_number = rng.gen_range(0..data.len());
+    let random_char = data.chars().nth(random_number).unwrap() as u32;
 
-#[doc = "decode token from Vec<u32>"]
-pub async fn decode_token(identifier: &str, data: Vec<u32>) -> Result<String> {
-  let tokenizer = Tokenizer::from_pretrained(identifier, None)?;
-  let tokens = tokenizer.decode(data, false)?;
+    token.push(random_char);
 
-  Ok(tokens)
+    counter += 1;
+  }
+
+  let local_time = Local::now();
+  let date_str = local_time.format("%Y%m%d").to_string();
+  let parsed = date_str.parse::<u32>().expect("Failed to parse date as u32");
+  
+  token.push(parsed);
+
+  token
 }
