@@ -67,6 +67,20 @@ pub async fn student_show_service(db: Pool<Postgres>, id: i32) -> anyhow::Result
   Ok(body)
 }
 
+#[doc = "Display the specified resource by exist column."]
+pub async fn student_show_by_exist_column_service(db: Pool<Postgres>, email: String, phone: String, register_number: String) -> anyhow::Result<ResponseDataEnum, ErrorEnum> {
+  let data = find_student_data_by_exists_column(db, email, phone, register_number).await;
+
+  if data.is_err() {
+    return Err(data.err().unwrap());
+  }
+
+  let converted_data = convert_struct_to_value(data.unwrap());
+  let body = ResponseDataEnum::SingleValue(converted_data);
+
+  Ok(body)
+}
+
 #[doc = "Update the specified resource in storage."]
 pub async fn student_update_service(db: Pool<Postgres>, id: i32, body: StudentSchema) -> anyhow::Result<ResponseDataEnum, ErrorEnum> {
   let query_is_student_exist = format!("select 1 from students where id = '{}'", id);
@@ -87,7 +101,10 @@ pub async fn student_update_service(db: Pool<Postgres>, id: i32, body: StudentSc
       }
     },
     Err(err) => {
-      return Err(err);
+      match err {
+        ErrorEnum::CustomError(_) => (),
+        _ => return Err(ErrorEnum::InternalServerError)
+      }
     }
   }
 

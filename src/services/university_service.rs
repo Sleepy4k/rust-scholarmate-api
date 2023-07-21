@@ -87,7 +87,10 @@ pub async fn university_update_service(db: Pool<Postgres>, id: i32, body: Univer
       }
     },
     Err(err) => {
-      return Err(err);
+      match err {
+        ErrorEnum::CustomError(_) => (),
+        _ => return Err(ErrorEnum::InternalServerError)
+      }
     }
   }
 
