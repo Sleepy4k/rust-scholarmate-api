@@ -1,77 +1,60 @@
-use serde_json::Value;
+use serde_json::{Value, json};
 use validator::Validate;
 use actix_web::{web, Responder};
 
 use crate::{
   schemas::register_schema::RegisterSchema,
-  repositories::auth_repository::{
-    insert_user_data,
-    fetch_user_data_by_email
-  },
+  services::register_service::*
 };
 
 use scholarmate_api::{
   structs::main_struct::AppState,
-  helpers::{
-    parse::get_email_parts,
-    hashing::hash_password,
-    response::response_json
-  }
+  helpers::response::create_response,
+  enums::{
+    error_enum::ErrorEnum,
+    response_enum::ResponseDataEnum
+  },
 };
 
 #[doc = "Register new user"]
-pub async fn register(state: web::Data<AppState>, body: web::Json<RegisterSchema>) -> impl Responder {
+pub async fn register_index_controller(state: web::Data<AppState>, body: web::Json<RegisterSchema>) -> impl Responder {
   let validate_form = body.validate();
 
   if validate_form.is_err() {
     let data = Value::from(validate_form.err().unwrap().to_string());
 
-    return response_json(
-      String::from("failed"),
+    return create_response(
+      String::from("unprocessable entity"),
       String::from("please fill all fields"),
-      vec![data]
+      ResponseDataEnum::SingleValue(data)
     )
   }
 
-  match fetch_user_data_by_email(state.db.clone(), body.email.to_owned()).await {
-    Some(_) => return response_json(
-      String::from("failed"),
-      String::from("email already exists"),
-      vec![]
-    ),
-    None => ()
-  };
-
-  if body.password.len() < 8 {
-    return response_json(
-      String::from("failed"),
-      String::from("password must be at least 8 characters"),
-      vec![]
-    )
+  match register_index_service(state.db.clone(), body.into_inner()).await {
+    Ok(data) => {
+      create_response(
+        String::from("success"),
+        String::from("successfully registered"),
+        data
+      )
+    },
+    Err(err) => {
+      match err {
+        ErrorEnum::CustomError(message) => {
+          create_response(
+            String::from("unprocessable entity"),
+            message,
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        },
+        _ => {
+          create_response(
+            String::from("internal server error"),
+            err.get_error(),
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        }
+      }
+    }
   }
-
-  if body.password != body.password_confirmation {
-    return response_json(
-      String::from("failed"),
-      String::from("password and confirm password must be same"),
-      vec![]
-    )
-  }
-
-  let salt = get_email_parts(body.email.as_str())[0];
-  let hashed_password = hash_password(body.password.as_str(), salt.as_bytes());
-
-  let user_data = RegisterSchema {
-    email: body.email.to_owned(),
-    password: hashed_password,
-    password_confirmation: String::new(),
-  };
-
-  let data = insert_user_data(state.db.clone(), user_data).await;
-
-  response_json(
-    String::from("success"),
-    String::from("successfully registered"),
-    data
-  )
 }
