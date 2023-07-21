@@ -1,4 +1,3 @@
-use serde_json::Value;
 use sqlx::{Pool, Postgres};
 
 use crate::{
@@ -7,42 +6,50 @@ use crate::{
 };
 
 use scholarmate_api::{
-  models::auth_model::FilteredUserModel,
-  helpers::parse::convert_vec_to_values
+  enums::error_enum::ErrorEnum,
+  models::auth_model::FilteredUserModel
 };
 
-#[doc = "Insert new user"]
-pub async fn insert_user_data(pool: Pool<Postgres>, body: RegisterSchema) -> Vec<Value> {
-  let data = sqlx::query_as!(FilteredUserModel,
+#[doc = "Create an user data."]
+pub async fn create_user_data(pool: Pool<Postgres>, body: RegisterSchema) -> anyhow::Result<FilteredUserModel, ErrorEnum> {
+  match sqlx::query_as!(FilteredUserModel,
     "insert into users (email, password, role, verified) values ($1, $2, $3, $4) returning id, email, role",
     body.email, body.password, String::from("user"), false)
-    .fetch_all(&pool)
-    .await
-    .unwrap();
-
-  let result = convert_vec_to_values(data);
-
-  result
+    .fetch_one(&pool)
+    .await {
+      Ok(data) => Ok(data),
+      Err(_) => Err(ErrorEnum::InternalServerError)
+    }
 }
 
-#[doc = "Fetch user data by email"]
-pub async fn fetch_user_data_by_email(pool: Pool<Postgres>, email: String) -> Option<UserModel> {
-  let data = sqlx::query_as!(UserModel, "select * from users where email = $1", email)
+#[doc = "Find a user data by email."]
+pub async fn find_user_data_by_email(pool: Pool<Postgres>, email: String) -> anyhow::Result<UserModel, ErrorEnum> {
+  match sqlx::query_as!(UserModel, "select * from users where email = $1 limit 1", email)
     .fetch_optional(&pool)
-    .await
-    .unwrap();
-
-  data
+    .await {
+      Ok(optional_data) => {
+        match optional_data {
+          Some(data) => Ok(data),
+          None => Err(ErrorEnum::CustomError(String::from("user not exist")))
+        }
+      },
+      Err(_) => Err(ErrorEnum::InternalServerError)
+    }
 }
 
-#[doc = "Update verified status"]
-pub async fn update_verified_status(pool: Pool<Postgres>, email: String) -> anyhow::Result<bool> {
+#[doc = "Update an existing user data."]
+pub async fn update_user_data(pool: Pool<Postgres>, email: String) -> anyhow::Result<bool, ErrorEnum> {
   match sqlx::query!(
     "update users set verified = true where email = $1",
     email)
-    .execute(&pool)
+    .fetch_optional(&pool)
     .await {
-      Ok(_) => Ok(true),
-      Err(_) => Ok(false)
+      Ok(optional_data) => {
+        match optional_data {
+          Some(_) => Ok(true),
+          None => Ok(false)
+        }
+      },
+      Err(_) => Err(ErrorEnum::InternalServerError)
     }
 }
