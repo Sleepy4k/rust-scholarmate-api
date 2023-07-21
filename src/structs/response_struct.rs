@@ -13,7 +13,7 @@ pub struct ResponseStruct {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ResponseStructWithToken {
   pub status: String,
-  pub token: String,
   pub message: String,
+  pub token: String,
   pub data: Value,
 }
