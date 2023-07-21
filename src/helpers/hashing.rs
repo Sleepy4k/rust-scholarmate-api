@@ -3,9 +3,14 @@ use argon2::{self, Config};
 #[doc = "Hash a password"]
 pub fn hash_password(password: &str, salt: &[u8]) -> String {
   let config = Config::default();
-  let hash = argon2::hash_encoded(password.as_bytes(), salt, &config).unwrap_or_else(|_| String::new());
   
-  hash
+  match argon2::hash_encoded(password.as_bytes(), salt, &config) {
+    Ok(hash) => hash,
+    Err(err) => {
+      println!("Error hashing password: {}", err);
+      String::new()
+    }
+  }
 }
 
 #[doc = "Verify a password against a hash"]

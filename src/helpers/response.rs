@@ -49,8 +49,8 @@ pub fn create_response_with_token(status: String, message: String, data: Respons
   let code = create_response_code(status.to_owned());
   let body = ResponseStructWithToken {
     status,
-    token,
     message,
+    token,
     data: data.get_value()
   };
 
