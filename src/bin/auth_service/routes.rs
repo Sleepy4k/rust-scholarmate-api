@@ -14,9 +14,9 @@ pub fn service_config(cfg: &mut web::ServiceConfig) {
     .route("/", web::route().to(welcome))
 
     // auth route
-    .route("/login", web::post().to(login))
-    .route("/register", web::post().to(register))
-    .route("/logout", web::post().to(logout))
+    .route("/login", web::post().to(login_index_controller))
+    .route("/register", web::post().to(register_index_controller))
+    .route("/logout", web::post().to(logout_index_controller))
 
     // otp route
     .service(

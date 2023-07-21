@@ -1,5 +1,3 @@
-extern crate argon2;
-
 use dotenv::dotenv;
 use std::net::TcpListener;
 
@@ -15,6 +13,7 @@ mod routes;
 mod models;
 mod helpers;
 mod schemas;
+mod services;
 mod controllers;
 mod repositories;
 
