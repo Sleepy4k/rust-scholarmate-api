@@ -1,65 +1,60 @@
-use chrono::Utc;
-use serde_json::Value;
+use chrono::NaiveDate;
 use sqlx::{Pool, Postgres};
 
 use crate::models::room_model::*;
 
-use scholarmate_api::helpers::parse::convert_vec_to_values;
+use scholarmate_api::enums::error_enum::ErrorEnum;
 
-#[doc = "Insert new room"]
-pub async fn insert_room_data(pool: Pool<Postgres>, name: String, members: String) -> Vec<Value> {
-  let current_date_time = Utc::now().naive_utc().date();
-  let data = sqlx::query_as!(RoomModel,
+#[doc = "Get all room data."]
+pub async fn get_room_data(pool: Pool<Postgres>) -> anyhow::Result<Vec<RoomModel>, ErrorEnum> {
+  match sqlx::query_as!(RoomModel, "select * from rooms")
+    .fetch_all(&pool)
+    .await {
+      Ok(data) => Ok(data),
+      Err(_) => Err(ErrorEnum::InternalServerError)
+    }
+}
+
+#[doc = "Create a room data."]
+pub async fn create_room_data(pool: Pool<Postgres>, name: String, members: String, current_date_time: NaiveDate) -> anyhow::Result<RoomModel, ErrorEnum> {
+  match sqlx::query_as!(RoomModel,
     "insert into rooms (name, members, updated_at, created_at) values ($1, $2, $3, $4) returning *",
     name, members, current_date_time, current_date_time)
-    .fetch_all(&pool)
-    .await
-    .unwrap();
-
-  let result = convert_vec_to_values(data);
-
-  result
+    .fetch_one(&pool)
+    .await {
+      Ok(data) => Ok(data),
+      Err(_) => Err(ErrorEnum::InternalServerError)
+    }
 }
 
-#[doc = "Fetch room data by user id"]
-pub async fn fetch_room_data_by_user_id(pool: Pool<Postgres>, id: i32) -> Vec<Value> {
-  let mut rooms_data = sqlx::query_as!(RoomModel,
-    "select * from rooms")
-    .fetch_all(&pool)
-    .await
-    .unwrap();
-
-  rooms_data = rooms_data
-    .into_iter()
-    .filter(|item| item.members.contains(&id.to_string()))
-    .collect::<Vec<_>>();
-
-  let data = rooms_data.to_vec();
-  let result = convert_vec_to_values(data);
-
-  result
-}
-
-#[doc = "Fetch room data by room id"]
-pub async fn fetch_room_data_by_room_id(pool: Pool<Postgres>, room_id: i32) -> Option<RoomModel> {
-  let data = sqlx::query_as!(RoomModel,
+#[doc = "Find a room data by id."]
+pub async fn find_room_data(pool: Pool<Postgres>, room_id: i32) -> anyhow::Result<RoomModel, ErrorEnum> {
+  match sqlx::query_as!(RoomModel,
     "select * from rooms where id = $1", room_id)
     .fetch_optional(&pool)
-    .await
-    .unwrap();
-
-  data
+    .await {
+      Ok(optional_data) => {
+        match optional_data {
+          Some(data) => Ok(data),
+          None => Err(ErrorEnum::CustomError(String::from("room not exist")))
+        }
+      },
+      Err(_) => Err(ErrorEnum::InternalServerError)
+    }
 }
 
 #[doc = "Delete room data by room id"]
-pub async fn delete_room_data(pool: Pool<Postgres>, room_id: i32) -> Vec<Value> {
-  let data = sqlx::query_as!(RoomModel,
+pub async fn delete_room_data(pool: Pool<Postgres>, room_id: i32) -> anyhow::Result<RoomModel, ErrorEnum> {
+  match sqlx::query_as!(RoomModel,
     "delete from rooms where id = $1 returning *", room_id)
-    .fetch_all(&pool)
-    .await
-    .unwrap();
-
-  let result = convert_vec_to_values(data);
-
-  result
+    .fetch_optional(&pool)
+    .await {
+      Ok(optional_data) => {
+        match optional_data {
+          Some(data) => Ok(data),
+          None => Err(ErrorEnum::CustomError(String::from("room not exist")))
+        }
+      },
+      Err(_) => Err(ErrorEnum::InternalServerError)
+    }
 }

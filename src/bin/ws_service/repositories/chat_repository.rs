@@ -1,94 +1,37 @@
-use chrono::Utc;
-use serde_json::Value;
+use chrono::NaiveDate;
 use sqlx::{Pool, Postgres};
-use std::collections::{HashMap, HashSet};
 
 use crate::{
   models::chat_model::*,
-  models::room_model::RoomModel,
   structs::session_struct::ChatMessage
 };
 
-use scholarmate_api::{
-  helpers::parse::convert_vec_to_values,
-  repositories::auth_repository::fetch_user_data,
-};
+use scholarmate_api::enums::error_enum::ErrorEnum;
 
-#[doc = "Insert new chat"]
-pub async fn insert_chat_data(pool: Pool<Postgres>, body: ChatMessage) -> Vec<Value> {
-  let current_date_time = Utc::now().naive_utc().date();
-  let data = sqlx::query_as!(ChatModel,
+#[doc = "Create a chat data."]
+pub async fn create_chat_data(pool: Pool<Postgres>, body: ChatMessage, current_date_time: NaiveDate) -> anyhow::Result<ChatModel, ErrorEnum> {
+  match sqlx::query_as!(ChatModel,
     "insert into chats (room_id, user_id, message, created_at) values ($1, $2, $3, $4) returning *",
     body.room_id, body.user_id, body.message, current_date_time)
-    .fetch_all(&pool)
-    .await
-    .unwrap();
-
-  let result = convert_vec_to_values(data);
-
-  result
+    .fetch_one(&pool)
+    .await {
+      Ok(data) => Ok(data),
+      Err(_) => Err(ErrorEnum::InternalServerError)
+    }
 }
 
-#[doc = "Fetch chat data by room id"]
-pub async fn fetch_chat_data_by_room_id(pool: Pool<Postgres>, room_id: i32) -> Vec<Value> {
-  let rooms_data = sqlx::query_as!(RoomModel,
-    "select * from rooms where id = $1", room_id)
-    .fetch_all(&pool)
-    .await
-    .unwrap();
-
-  let mut ids = HashSet::new();
-  let mut rooms_map = HashMap::new();
-  let data = rooms_data.to_owned();
-
-  for room in &data {
-    let user_ids = room
-      .members
-      .split(",")
-      .into_iter()
-      .collect::<Vec<_>>();
-
-    for id in user_ids.to_vec() {
-      ids.insert(id.to_string());
-    }
-
-    rooms_map.insert(room.id.to_string(), user_ids.to_vec());
-  }
-
-  let ids = ids.into_iter().collect::<Vec<_>>();
-  let users_data = fetch_user_data(pool.clone()).await;
-  let filtered_users_data = users_data
-    .into_iter()
-    .filter(|item| ids.contains(&item["id"].to_string()))
-    .collect::<Vec<_>>();
-
-  let chats_data = sqlx::query_as!(ChatModel,
+#[doc = "Find a chat data by id."]
+pub async fn find_chat_data(pool: Pool<Postgres>, room_id: i32) -> anyhow::Result<ChatModel, ErrorEnum> {
+  match sqlx::query_as!(ChatModel,
     "select * from chats where room_id = $1", room_id)
-    .fetch_all(&pool)
-    .await
-    .unwrap();
-
-  let converted_chats = convert_vec_to_values(chats_data);
-
-  let users_map: HashMap<String, Value> = HashMap::from_iter(
-    filtered_users_data
-      .into_iter()
-      .map(|item| (item["id"].to_string(), item)),
-  );
-
-  let response_chats = rooms_data.into_iter().map(move |room| {
-    let users = rooms_map
-      .get(&room.id.to_string())
-      .unwrap()
-      .into_iter()
-      .map(|id| users_map.get(id.to_owned()).unwrap().clone())
-      .collect::<Vec<_>>();
-   
-    let chats = converted_chats.clone();
-    return ChatResponseModel{ room, users, chats };
-  }).collect::<Vec<_>>();
-
-  let result = convert_vec_to_values(response_chats);
-
-  result
+    .fetch_optional(&pool)
+    .await {
+      Ok(optional_data) => {
+        match optional_data {
+          Some(data) => Ok(data),
+          None => Err(ErrorEnum::CustomError(String::from("room not exist")))
+        }
+      },
+      Err(_) => Err(ErrorEnum::InternalServerError)
+    }
 }
