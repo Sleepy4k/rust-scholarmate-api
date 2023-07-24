@@ -82,8 +82,6 @@ pub async fn university_update_service(db: Pool<Postgres>, id: i32, body: Univer
     Ok(data) => {
       if data.id != id {
         return Err(ErrorEnum::CustomError(String::from("university already exist")));
-      } else {
-        ()
       }
     },
     Err(err) => {

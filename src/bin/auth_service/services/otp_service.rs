@@ -65,7 +65,7 @@ pub async fn otp_store_service(db: Pool<Postgres>, body: OTPSchema) -> anyhow::R
     Ok(token_data) => {
       let email_body = create_html_body(user_otp.to_string(), user_name.to_string());
 
-      match send_email(reciever, format!("{} is your verification code", user_otp.to_string()), ContentType::TEXT_HTML, email_body.into_string()).await {
+      match send_email(reciever, format!("{} is your verification code", user_otp), ContentType::TEXT_HTML, email_body.into_string()).await {
         Ok(_) => {
         let body = ResponseDataEnum::SingleValue(json!({
           "token": token_data.token,
@@ -124,7 +124,7 @@ pub async fn otp_update_service(db: Pool<Postgres>, body: DetailOTPSchema) -> an
     Ok(token_data) => {
       let email_body = create_html_body(user_otp.to_string(), user_name.to_string());
 
-      match send_email(reciever, format!("{} is your verification code", user_otp.to_string()), ContentType::TEXT_HTML, email_body.into_string()).await {
+      match send_email(reciever, format!("{} is your verification code", user_otp), ContentType::TEXT_HTML, email_body.into_string()).await {
         Ok(_) => {
         let body = ResponseDataEnum::SingleValue(json!({
           "token": token_data.token,

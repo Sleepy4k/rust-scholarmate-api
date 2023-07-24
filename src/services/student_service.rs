@@ -96,8 +96,6 @@ pub async fn student_update_service(db: Pool<Postgres>, id: i32, body: StudentSc
     Ok(data) => {
       if data.id != id {
         return Err(ErrorEnum::CustomError(String::from("student already exist")));
-      } else {
-        ()
       }
     },
     Err(err) => {

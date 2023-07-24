@@ -44,8 +44,6 @@ impl TokenStruct {
     let key = EncodingKey::from_secret(jwt_secret.as_ref());
     let header = Header::default();
 
-    let encode_token = encode(&header, &self, &key).unwrap_or(String::new());
-
-    encode_token
+    encode(&header, &self, &key).unwrap_or(String::new())
   }
 }

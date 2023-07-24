@@ -1,5 +1,5 @@
+use serde_json::json;
 use sqlx::{Pool, Postgres};
-use serde_json::{Value, json};
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::{
@@ -29,7 +29,7 @@ pub async fn login_index_service(db: Pool<Postgres>, body: LoginSchema) -> anyho
         return Err(ErrorEnum::CustomError(String::from("email or password is wrong")));
       }
 
-      if user.verified == false {
+      if !user.verified {
         return Err(ErrorEnum::CustomError(String::from("please verify your account first")));
       }
 
@@ -52,7 +52,7 @@ pub async fn login_index_service(db: Pool<Postgres>, body: LoginSchema) -> anyho
         Ok(student) => student.get_value(),
         Err(err) => {
           match err {
-            ErrorEnum::CustomError(_) => Value::from(json!({})),
+            ErrorEnum::CustomError(_) => json!({}),
             _ => return Err(ErrorEnum::InternalServerError)
           }
         }
