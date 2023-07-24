@@ -1,67 +1,152 @@
+use validator::Validate;
+use serde_json::{json, Value};
 use actix_web::{web, Responder};
 
 use crate::{
-  repositories::chat_repository::*,
-  repositories::room_repository::*,
+  services::{
+    chat_service::*,
+    room_service::*
+  },
   schemas::chat_schema::*,
-  structs::main_struct::WSAppState,
+  structs::main_struct::WSAppState
 };
 
-use scholarmate_api::helpers::response::response_json;
+use scholarmate_api::{
+  enums::{
+    error_enum::ErrorEnum,
+    response_enum::ResponseDataEnum
+  },
+  helpers::response::create_response
+};
 
 #[doc = "Get chat data"]
 pub async fn get_chat(state: web::Data<WSAppState>, body: web::Query<GeneralChatSchema>) -> impl Responder {
-  let chats = fetch_room_data_by_user_id(state.db.clone(), body.uid.to_owned()).await;
+  let validate_form = body.validate();
 
-  response_json(
-    String::from("Success"),
-    String::from("Successfully fetch chat data"),
-    chats
-  )
+  if validate_form.is_err() {
+    let data = Value::from(validate_form.err().unwrap().to_string());
+
+    return create_response(
+      String::from("unprocessable entity"),
+      String::from("please fill all fields"),
+      ResponseDataEnum::SingleValue(data)
+    )
+  }
+
+  match room_show_by_user_id_service(state.db.clone(), body.uid.to_owned()).await {
+    Ok(data) => {
+      create_response(
+        String::from("success"),
+        String::from("successfully retrieved chat data"),
+        data
+      )
+    },
+    Err(err) => {
+      match err {
+        ErrorEnum::CustomError(message) => {
+          create_response(
+            String::from("unprocessable entity"),
+            message,
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        },
+        _ => {
+          create_response(
+            String::from("internal server error"),
+            err.get_error(),
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        }
+      }
+    }
+  }
 }
 
 #[doc = "Add chat data"]
 pub async fn add_chat(state: web::Data<WSAppState>, body: web::Json<DetailChatSchema>) -> impl Responder {
-  let members = format!("{},{}", body.sender, body.reciver);
-  let chat = insert_room_data(state.db.clone(), body.name.to_owned(), members).await;
+  let validate_form = body.validate();
 
-  response_json(
-    String::from("Success"),
-    String::from("Successfully add chat data"),
-    chat
-  )
+  if validate_form.is_err() {
+    let data = Value::from(validate_form.err().unwrap().to_string());
+
+    return create_response(
+      String::from("unprocessable entity"),
+      String::from("please fill all fields"),
+      ResponseDataEnum::SingleValue(data)
+    )
+  }
+
+  let members = format!("{},{}", body.sender, body.reciver);
+
+  match room_store_service(state.db.clone(), body.name.to_owned(), members).await {
+    Ok(data) => {
+      create_response(
+        String::from("success"),
+        String::from("successfully created chat data"),
+        data
+      )
+    },
+    Err(err) => {
+      match err {
+        ErrorEnum::CustomError(message) => {
+          create_response(
+            String::from("unprocessable entity"),
+            message,
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        },
+        _ => {
+          create_response(
+            String::from("internal server error"),
+            err.get_error(),
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        }
+      }
+    }
+  }
 }
 
 #[doc = "Find chat data"]
 pub async fn find_chat(state: web::Data<WSAppState>, body: web::Query<GeneralChatSchema>, path: web::Path<i32>) -> impl Responder {
   let room_id = path.into_inner();
+  let validate_form = body.validate();
 
-  match fetch_room_data_by_room_id(state.db.clone(), room_id).await {
-    Some(room_data) => {
-      let filtered = room_data.members.contains(&body.uid.to_string().as_str());
+  if validate_form.is_err() {
+    let data = Value::from(validate_form.err().unwrap().to_string());
 
-      if filtered {
-        let chats = fetch_chat_data_by_room_id(state.db.clone(), room_id).await;
+    return create_response(
+      String::from("unprocessable entity"),
+      String::from("please fill all fields"),
+      ResponseDataEnum::SingleValue(data)
+    )
+  }
 
-        response_json(
-          String::from("Success"),
-          String::from("Successfully find chat data"),
-          chats
-        )
-      } else {
-        response_json(
-          String::from("Failed"),
-          String::from("You are not member of this room"),
-          vec![]
-        )
-      }
-    },
-    None => {
-      return response_json(
-        String::from("Failed"),
-        String::from("Room not found"),
-        vec![]
+  match chat_show_service(state.db.clone(), room_id, body.into_inner()).await {
+    Ok(data) => {
+      create_response(
+        String::from("success"),
+        String::from("successfully retrieved chat data"),
+        data
       )
+    },
+    Err(err) => {
+      match err {
+        ErrorEnum::CustomError(message) => {
+          create_response(
+            String::from("unprocessable entity"),
+            message,
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        },
+        _ => {
+          create_response(
+            String::from("internal server error"),
+            err.get_error(),
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        }
+      }
     }
   }
 }
@@ -69,34 +154,43 @@ pub async fn find_chat(state: web::Data<WSAppState>, body: web::Query<GeneralCha
 #[doc = "Delete chat data"]
 pub async fn delete_chat(state: web::Data<WSAppState>, body: web::Json<DetailChatSchema>, path: web::Path<i32>) -> impl Responder {
   let room_id = path.into_inner();
+  let validate_form = body.validate();
 
-  match fetch_room_data_by_room_id(state.db.clone(), room_id).await {
-    Some(room_data) => {
-      let members = format!("{},{}", body.sender, body.reciver);
-      let filtered = room_data.members.contains(&members) && room_data.name == body.name;
+  if validate_form.is_err() {
+    let data = Value::from(validate_form.err().unwrap().to_string());
 
-      if filtered {
-        let room = delete_room_data(state.db.clone(), room_id).await;
+    return create_response(
+      String::from("unprocessable entity"),
+      String::from("please fill all fields"),
+      ResponseDataEnum::SingleValue(data)
+    )
+  }
 
-        response_json(
-          String::from("Success"),
-          String::from("Successfully find chat data"),
-          room
-        )
-      } else {
-        response_json(
-          String::from("Failed"),
-          String::from("You are not member of this room"),
-          vec![]
-        )
-      }
-    },
-    None => {
-      return response_json(
-        String::from("Failed"),
-        String::from("Room not found"),
-        vec![]
+  match room_destroy_service(state.db.clone(), room_id).await {
+    Ok(data) => {
+      create_response(
+        String::from("success"),
+        String::from("successfully deleted chat data"),
+        data
       )
+    },
+    Err(err) => {
+      match err {
+        ErrorEnum::CustomError(message) => {
+          create_response(
+            String::from("unprocessable entity"),
+            message,
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        },
+        _ => {
+          create_response(
+            String::from("internal server error"),
+            err.get_error(),
+            ResponseDataEnum::SingleValue(json!({}))
+          )
+        }
+      }
     }
   }
 }

@@ -1,22 +1,21 @@
-use std::path::PathBuf;
+use validator::Validate;
+use serde_json::{Value, json};
 use actix_web::{web, Responder};
 
 use crate::{
-  schemas::global_schema::GeneralSchema,
-  helpers::{
-    date::*,
-    build_csv::*,
-    build_excel::*,
-    parse::build_data
-  }
+  services::scholarship_service::*,
+  schemas::global_schema::GeneralSchema
 };
 
 use scholarmate_api::{
   structs::main_struct::AppState,
-  helpers::response::response_file,
-  repositories::{
-    scholarship_repository::fetch_scholarship_data,
-    translate_repository::fetch_translate_data_by_table
+  helpers::response::{
+    create_response,
+    create_response_binary
+  },
+  enums::{
+    error_enum::ErrorEnum,
+    response_enum::ResponseDataEnum
   }
 };
 
@@ -24,50 +23,74 @@ const TABLE_NAME: &str = "scholarships";
 
 #[doc = "Export scholarship data to csv file"]
 pub async fn scholarship_export_csv(state: web::Data<AppState>, body: web::Json<GeneralSchema>) -> impl Responder {
+  let validate_form = body.validate();
   let table = TABLE_NAME.to_string();
-  let data = fetch_scholarship_data(state.db.clone()).await;
-  let result = build_data(data).await.unwrap_or(Vec::new());
-  let fields = fetch_translate_data_by_table(state.db.clone(), table.to_owned()).await;
-  
-  let formatted_datetime = get_current_time();
-  let file_name = format!("{}-{}.csv", table, formatted_datetime);
-  let path: PathBuf = file_name.parse().unwrap();
 
-  let last_res = build_csv_file(
-    (result, fields),
-    body.fields.to_owned(),
-    path
-  ).await.unwrap_or(Vec::new());
+  if validate_form.is_err() {
+    let data = Value::from(validate_form.err().unwrap().to_string());
 
-  response_file(
-    String::from("success"),
-    last_res,
-    format!("attachment; filename={}", file_name),
-    String::from("text/csv"),
-  )
+    return create_response(
+      String::from("unprocessable entity"),
+      String::from("please fill all fields"),
+      ResponseDataEnum::SingleValue(data)
+    )
+  }
+
+  match handle_scholarship_export(state.db.clone(), body.into_inner(), table.to_owned(), String::from("csv")).await {
+    Ok((data, mime_type, file_name)) => create_response_binary(
+      String::from("success"),
+      data,
+      format!("attachment; filename={}", file_name),
+      mime_type
+    ),
+    Err(err) => match err {
+      ErrorEnum::CustomError(_) => create_response(
+        String::from("unprocessable entity"),
+        err.get_error(),
+        ResponseDataEnum::SingleValue(json!({}))
+      ),
+      _ => create_response(
+        String::from("internal server error"),
+        err.get_error(),
+        ResponseDataEnum::SingleValue(json!({}))
+      )
+    }
+  }
 }
 
 #[doc = "Export scholarship data to excel file"]
 pub async fn scholarship_export_excel(state: web::Data<AppState>, body: web::Json<GeneralSchema>) -> impl Responder {
+  let validate_form = body.validate();
   let table = TABLE_NAME.to_string();
-  let data = fetch_scholarship_data(state.db.clone()).await;
-  let result = build_data(data).await.unwrap_or(Vec::new());
-  let fields = fetch_translate_data_by_table(state.db.clone(), table.to_owned()).await;
-  
-  let formatted_datetime = get_current_time();
-  let file_name = format!("{}-{}.xlsx", table, formatted_datetime);
-  let path: PathBuf = file_name.parse().unwrap();
 
-  let last_res = build_excel_file(
-    (result, fields),
-    body.fields.to_owned(),
-    path
-  ).await.unwrap_or(Vec::new());
+  if validate_form.is_err() {
+    let data = Value::from(validate_form.err().unwrap().to_string());
 
-  response_file(
-    String::from("success"),
-    last_res,
-    format!("attachment; filename={}", file_name),
-    String::from("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
-  )
+    return create_response(
+      String::from("unprocessable entity"),
+      String::from("please fill all fields"),
+      ResponseDataEnum::SingleValue(data)
+    )
+  }
+
+  match handle_scholarship_export(state.db.clone(), body.into_inner(), table.to_owned(), String::from("xlsx")).await {
+    Ok((data, mime_type, file_name)) => create_response_binary(
+      String::from("success"),
+      data,
+      format!("attachment; filename={}", file_name),
+      mime_type
+    ),
+    Err(err) => match err {
+      ErrorEnum::CustomError(_) => create_response(
+        String::from("unprocessable entity"),
+        err.get_error(),
+        ResponseDataEnum::SingleValue(json!({}))
+      ),
+      _ => create_response(
+        String::from("internal server error"),
+        err.get_error(),
+        ResponseDataEnum::SingleValue(json!({}))
+      )
+    }
+  }
 }

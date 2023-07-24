@@ -78,8 +78,6 @@ pub async fn application_store_controller(state: web::Data<AppState>, body: web:
           String::from("university quota is full"),
           ResponseDataEnum::SingleValue(json!({}))
         )
-      } else {
-        ()
       }
     },
     Err(err) => {
@@ -112,8 +110,6 @@ pub async fn application_store_controller(state: web::Data<AppState>, body: web:
           String::from("scholarship quota is full"),
           ResponseDataEnum::SingleValue(json!({}))
         )
-      } else {
-        ()
       }
     },
     Err(err) => {
@@ -147,14 +143,14 @@ pub async fn application_store_controller(state: web::Data<AppState>, body: web:
     Err(err) => {
       match err {
         ErrorEnum::CustomError(message) => {
-          return create_response(
+          create_response(
             String::from("unprocessable entity"),
             message,
             ResponseDataEnum::SingleValue(json!({}))
           )
         },
         _ => {
-          return create_response(
+          create_response(
             String::from("internal server error"),
             err.get_error(),
             ResponseDataEnum::SingleValue(json!({}))
@@ -186,14 +182,14 @@ pub async fn application_show_controller(state: web::Data<AppState>, path: web::
     Err(err) => {
       match err {
         ErrorEnum::CustomError(message) => {
-          return create_response(
+          create_response(
             String::from("unprocessable entity"),
             message,
             ResponseDataEnum::SingleValue(json!({}))
           )
         },
         _ => {
-          return create_response(
+          create_response(
             String::from("internal server error"),
             err.get_error(),
             ResponseDataEnum::SingleValue(json!({}))
