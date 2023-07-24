@@ -42,8 +42,8 @@ tokenizers = "0.13.3"
 maud = "0.25.0"
 rand = "0.8.4"
 regex = "1.4"
-otp = { path = "src/lib/otp" }
-rate_limit = { path = "src/lib/rate_limit" }
+otp = { git = "https://github.com/Sleepy4k/rust-otp-code", branch = "main" }
+rate_limit = { git = "https://github.com/Sleepy4k/rust-actix-rate-limit", branch = "main" }
 
 [dev-dependencies]
 pretty_assertions = "1"
