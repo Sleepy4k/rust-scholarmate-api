@@ -6,7 +6,7 @@ use serde::{Serialize, Deserialize};
 pub enum ResponseDataEnum {
   SingleValue(Value),
   ArrayValue(Vec<Value>),
-  ArrayUsize(Vec<usize>),
+  ArrayUsize(Vec<u8>),
 }
 
 impl ResponseDataEnum {
@@ -34,6 +34,6 @@ impl ResponseDataEnum {
       ResponseDataEnum::SingleValue(value) => value.is_null(),
       ResponseDataEnum::ArrayValue(value) => value.is_empty(),
       ResponseDataEnum::ArrayUsize(value) => value.is_empty()
-    }
+   }
   }
 }
