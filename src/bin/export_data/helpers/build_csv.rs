@@ -30,7 +30,7 @@ async fn write_csv_file(path: PathBuf, data: Vec<Map<String, Value>>, ref_header
       workbook.write_record(&record_data)?;
     } else {
       if row_idx == 0 {
-        let translated_header = row.keys().cloned().into_iter().map(|x| {
+        let translated_header = row.keys().cloned().map(|x| {
           ref_header.get(&x).unwrap_or(&x).to_owned()
         }).collect::<Vec<String>>();
 
@@ -51,6 +51,7 @@ async fn write_csv_file(path: PathBuf, data: Vec<Map<String, Value>>, ref_header
 }
 
 #[doc = "Build csv file"]
+#[allow(clippy::redundant_pattern_matching)]
 pub async fn build_csv_file(param: (Vec<Map<String, Value>>, Vec<Value>), fields: Value, path: PathBuf) -> anyhow::Result<Vec<u8>> {
   let sort_field = to_array(fields)
     .into_iter().map(|x| {

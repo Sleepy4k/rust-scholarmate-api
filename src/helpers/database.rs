@@ -5,9 +5,7 @@ use sqlx::postgres::{PgPool, PgPoolOptions};
 
 lazy_static! {
   pub static ref POOL: AsyncOnce<PgPool> = AsyncOnce::new(async  {
-    let client = open_postgres().await;
-
-    client
+    open_postgres().await
   });
 }
 
@@ -16,7 +14,7 @@ pub async fn open_postgres() -> PgPool {
   let database_url = env::var("DATABASE_URL")
     .unwrap_or_else(|_| String::from("postgres://postgres:postgres@localhost:5137/postgres"));
 
-  let pool = match PgPoolOptions::new()
+  match PgPoolOptions::new()
     .max_connections(10)
     .connect(&database_url)
     .await {
@@ -28,14 +26,10 @@ pub async fn open_postgres() -> PgPool {
         println!("Failed to connect to the database: {:?}", err);
         process::exit(1);
       }
-    };
-
-  pool
+    }
 }
 
 #[doc = "Connect to postgres database"]
 pub async fn connect_postgres() -> PgPool {
-  let _db = POOL.get().await.to_owned();
-
-  _db
+  POOL.get().await.to_owned()
 }

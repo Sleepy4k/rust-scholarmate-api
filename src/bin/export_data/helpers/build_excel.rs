@@ -11,7 +11,7 @@ fn write_excel_cell(row: u32, col: u16, value: Value, sheet: &mut Worksheet) -> 
   if value.is_i64() || value.is_f64() {
     sheet.write_number(row, col, to_f64(value), None)?
   } else if value.is_string() {
-    sheet.write_string(row, col, &to_str(value).as_str(), None)?
+    sheet.write_string(row, col, to_str(value).as_str(), None)?
   } else {
     sheet.write_blank(row, col, None)?
   };
@@ -44,7 +44,7 @@ async fn write_excel_file(path: PathBuf, data: Vec<Map<String, Value>>, ref_head
       }
     } else {
       if row_idx == 0 {
-        let keys = row.keys().cloned().into_iter().collect::<Vec<String>>();
+        let keys = row.keys().cloned().collect::<Vec<String>>();
 
         for (col_idx, x) in keys.into_iter().enumerate() {
           let display_header = ref_header.get(&x).unwrap_or(&x).to_owned();
@@ -64,6 +64,7 @@ async fn write_excel_file(path: PathBuf, data: Vec<Map<String, Value>>, ref_head
 }
 
 #[doc = "Build excel file"]
+#[allow(clippy::redundant_pattern_matching)]
 pub async fn build_excel_file(param: (Vec<Map<String, Value>>, Vec<Value>), fields: Value,path: PathBuf) -> anyhow::Result<Vec<u8>> {
   let sort_field = to_array(fields)
     .into_iter().map(|x| {

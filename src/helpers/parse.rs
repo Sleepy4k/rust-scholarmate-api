@@ -5,7 +5,7 @@ use chrono::{Local, NaiveDateTime, format::strftime::StrftimeItems};
 
 #[doc = "Convert string to slug"]
 pub fn slugify(text: &str, replacer: &str) -> String {
-  text.replace(" ", replacer)
+  text.replace(' ', replacer)
 }
 
 #[doc = "function to convert value to string"]
@@ -15,7 +15,7 @@ pub fn to_str(data: Value) -> String {
 
 #[doc = "function to convert value to i64"]
 pub fn to_i64(data: Value) -> i64 {
-  data.as_i64().unwrap_or(0) as i64
+  data.as_i64().unwrap_or(0)
 }
 
 #[doc = "function to convert value to i32"]
@@ -45,7 +45,7 @@ pub fn convert_struct_to_value<T: Serialize>(data: T) -> Value {
 
 #[doc = "Get email parts"]
 pub fn get_email_parts(email: &str) -> Vec<&str> {
-  let email_parts = email.split("@").collect::<Vec<&str>>();
+  let email_parts = email.split('@').collect::<Vec<&str>>();
 
   email_parts
 }
@@ -75,11 +75,11 @@ pub fn vec_to_string(vec: Vec<&str>) -> String {
   let mut res = String::new();
 
   for (i, el) in vec.into_iter().enumerate() {
-    if i != 0 {res.push_str(",")}
+    if i != 0 {res.push(',')}
     
-    res.push_str("'");
+    res.push('\'');
     res.push_str(el);
-    res.push_str("'");
+    res.push('\'');
   }
 
   res

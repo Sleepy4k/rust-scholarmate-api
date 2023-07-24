@@ -60,13 +60,12 @@ pub fn create_response_with_token(status: String, message: String, data: Respons
 }
 
 #[doc = "Create a response template for binary"]
-pub fn create_response_binary(status: String, data: ResponseDataEnum, disposition: String, content_type: String) -> HttpResponse {
+pub fn create_response_binary(status: String, data: Vec<u8>, disposition: String, content_type: String) -> HttpResponse {
   let code = create_response_code(status.to_owned());
-  let body = data.get_value();
 
   HttpResponse::build(code)
     .insert_header(("Access-Control-Expose-Headers", "Content-Disposition"))
     .insert_header(("Content-Disposition", disposition))
     .insert_header(("Content-Type", content_type))
-    .json(body)
+    .body(data)
 }
