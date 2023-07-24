@@ -122,6 +122,6 @@ where
       ResponseDataEnum::SingleValue(json!({}))
     ).map_into_right_body();
 
-    return Box::pin(async { Ok(ServiceResponse::new(req, response)) })
+    Box::pin(async { Ok(ServiceResponse::new(req, response)) })
   }
 }
