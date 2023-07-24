@@ -13,6 +13,7 @@ mod routes;
 mod models;
 mod structs;
 mod schemas;
+mod services;
 mod controllers;
 mod repositories;
 

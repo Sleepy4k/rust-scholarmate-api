@@ -48,12 +48,12 @@ fn get_env_var(server_config: &Value, key: &str) -> Option<String> {
 #[doc = "Get Server Config"]
 fn get_server_config(name: &str, version: &str, host: &str, port: &str, max_request: &str, reset_request: &str,) -> Value {
   let server_type = json!({
-    "name": env::var(name).expect(&format!("no environment variable set for \"{}\"", name)),
-    "version": env::var(version).expect(&format!("no environment variable set for \"{}\"", version)),
-    "host": env::var(host).expect(&format!("no environment variable set for \"{}\"", host)),
-    "port": env::var(port).expect(&format!("no environment variable set for \"{}\"", port)),
-    "max_request": env::var(max_request).expect(&format!("no environment variable set for \"{}\"", max_request)),
-    "reset_request": env::var(reset_request).expect(&format!("no environment variable set for \"{}\"", reset_request)),
+    "name": env::var(name).unwrap_or_else(|_| panic!("no environment variable set for \"{}\"", name)),
+    "version": env::var(version).unwrap_or_else(|_| panic!("no environment variable set for \"{}\"", version)),
+    "host": env::var(host).unwrap_or_else(|_| panic!("no environment variable set for \"{}\"", host)),
+    "port": env::var(port).unwrap_or_else(|_| panic!("no environment variable set for \"{}\"", port)),
+    "max_request": env::var(max_request).unwrap_or_else(|_| panic!("no environment variable set for \"{}\"", max_request)),
+    "reset_request": env::var(reset_request).unwrap_or_else(|_| panic!("no environment variable set for \"{}\"", reset_request)),
   });
 
   server_type

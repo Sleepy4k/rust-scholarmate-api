@@ -12,6 +12,7 @@ mod server;
 mod routes;
 mod schemas;
 mod helpers;
+mod services;
 mod controllers;
 
 #[tokio::main]
