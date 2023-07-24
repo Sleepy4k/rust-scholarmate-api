@@ -1,3 +1,4 @@
+use chrono::Utc;
 use actix::prelude::*;
 use actix_web_actors::ws;
 use sqlx::{Pool, Postgres};
@@ -5,7 +6,7 @@ use std::time::{Duration, Instant};
 use serde::{Deserialize, Serialize};
 
 use crate::{
-  repositories::chat_repository::insert_chat_data,
+  repositories::chat_repository::create_chat_data,
   structs::{
     main_struct::Message,
     message_struct::{ChatServer, ClientMessage},
@@ -77,8 +78,9 @@ impl Handler<Message> for WsChatSession {
 }
 
 #[doc = "Insert chat data to database from websocket chat session."]
-async fn query_data(db_pool: Pool<Postgres>, chat_msg: ChatMessage) -> () {
-  let _ = insert_chat_data(db_pool, chat_msg).await;
+async fn query_data(db_pool: Pool<Postgres>, chat_msg: ChatMessage) {
+  let current_date_time = Utc::now().naive_utc().date();
+  let _ = create_chat_data(db_pool, chat_msg, current_date_time).await;
 }
 
 impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
@@ -104,7 +106,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsChatSession {
       }
 
       ws::Message::Text(text) => {
-        let data_json = serde_json::from_str::<ChatMessage>(&text.to_string());
+        let data_json = serde_json::from_str::<ChatMessage>(&text);
 
         if let Err(err) = data_json {
           println!("Failed to parse message: {err}");
