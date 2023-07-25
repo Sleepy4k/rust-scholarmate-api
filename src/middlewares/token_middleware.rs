@@ -1,127 +1,80 @@
-use std::sync::Arc;
-use serde_json::json;
-use std::collections::HashSet;
-use std::future::{ready, Ready};
+use std::{
+  rc::Rc,
+  future::{ready, Ready}
+};
 use futures_util::future::LocalBoxFuture;
 use actix_web::{
   Error,
-  body::EitherBody,
-  dev::{
-    self,
-    Service,
-    Transform,
-    ServiceRequest,
-    ServiceResponse
-  }
+  error::ErrorInternalServerError,
+  dev::{forward_ready, Service, ServiceRequest, ServiceResponse, Transform}
 };
 
-use crate::{
-  structs::auth_struct::TokenStruct,
-  helpers::response::create_response,
-  enums::response_enum::ResponseDataEnum
-};
+use crate::structs::auth_struct::TokenStruct;
 
 pub struct CheckToken;
 
 impl<S, B> Transform<S, ServiceRequest> for CheckToken
 where
-  S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
+  S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
   S::Future: 'static,
   B: 'static,
 {
-  type Response = ServiceResponse<EitherBody<B>>;
+  type Response = ServiceResponse<B>;
   type Error = Error;
   type InitError = ();
   type Transform = CheckTokenMiddleware<S>;
   type Future = Ready<Result<Self::Transform, Self::InitError>>;
 
   fn new_transform(&self, service: S) -> Self::Future {
-    ready(Ok(CheckTokenMiddleware { service }))
+    ready(Ok(CheckTokenMiddleware {
+      service: Rc::new(service)
+    }))
   }
 }
+
 pub struct CheckTokenMiddleware<S> {
-  service: S,
+  service: Rc<S>,
 }
 
 impl<S, B> Service<ServiceRequest> for CheckTokenMiddleware<S>
 where
-  S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error>,
+  S: Service<ServiceRequest, Response = ServiceResponse<B>, Error = Error> + 'static,
   S::Future: 'static,
   B: 'static,
 {
-  type Response = ServiceResponse<EitherBody<B>>;
+  type Response = ServiceResponse<B>;
   type Error = Error;
   type Future = LocalBoxFuture<'static, Result<Self::Response, Self::Error>>;
 
-  dev::forward_ready!(service);
+  forward_ready!(service);
 
-  fn call(&self, request: ServiceRequest) -> Self::Future {
-    let path = request.path().to_string();
+  fn call(&self, req: ServiceRequest) -> Self::Future {
+    let srv = self.service.clone();
 
-    if path == "/" || path == "/login" || path == "/register" {
-      let fut = self.service.call(request);
-
-      return Box::pin(async move {
-        fut.await.map(ServiceResponse::map_into_left_body)
-      })
-    }
-
-    let whitelist_routes: HashSet<String> = vec![
-      "/forum".to_owned(),
-      "/student".to_owned(),
-      "/university".to_owned(),
-      "/scholarship".to_owned(),
-    ].into_iter().collect();
+    Box::pin(async move {
+      if req.path() == "/" || req.path() == "/login" || req.path() == "/register" {
+        let res = srv.call(req).await?;
   
-    let whitelist_routes = Arc::new(whitelist_routes);
-  
-    let user_details = request
-      .headers()
-      .get("Authorization")
-      .ok_or(())
-      .and_then(|h| h.to_str().map_err(|_| ()))
-      .ok()
-      .and_then(|s| s.split_whitespace().nth(1))
-      .ok_or(())
-      .and_then(|t| TokenStruct::from_jwt(t).map_err(|_| ()))
-      .ok();
-
-    if let Some(user) = user_details {
-      if whitelist_routes.contains(&path) && user.role == "user" {
-        let method = request.method().to_string();
-
-        if method == "POST" || method == "PUT" || method == "DELETE" {
-          let req = request.into_parts().0;
-          let response = create_response(
-            String::from("forbidden"),
-            String::from("you are not allowed to access this route with your current role"),
-            ResponseDataEnum::SingleValue(json!({}))
-          ).map_into_right_body();
-      
-          return Box::pin(async { Ok(ServiceResponse::new(req, response)) })
-        } else {
-          let fut = self.service.call(request);
-      
-          return Box::pin(async move {
-            fut.await.map(ServiceResponse::map_into_left_body)
-          })
-        }
+        return Ok(res)
       }
 
-      let fut = self.service.call(request);
+      let user_details = req.headers()
+        .get("Authorization")
+        .ok_or(())
+        .and_then(|h| h.to_str().map_err(|_| ()))
+        .ok()
+        .and_then(|s| s.split_whitespace().nth(1))
+        .ok_or(())
+        .and_then(|t| TokenStruct::from_jwt(t).map_err(|_| ()))
+        .ok();
+
+      if let Some(_) = user_details {
+        let res = srv.call(req).await?;
   
-      return Box::pin(async move {
-        fut.await.map(ServiceResponse::map_into_left_body)
-      })
-    }
-
-    let req = request.into_parts().0;
-    let response = create_response(
-      String::from("unauthorized"),
-      String::from("please identify yourself as a user by providing a valid token"),
-      ResponseDataEnum::SingleValue(json!({}))
-    ).map_into_right_body();
-
-    Box::pin(async { Ok(ServiceResponse::new(req, response)) })
+        Ok(res)
+      } else {
+        Err(ErrorInternalServerError("please identify yourself as a user by providing a valid token"))
+      }
+    })
   }
 }
