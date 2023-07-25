@@ -23,7 +23,7 @@ use crate::routes::service_config;
 use scholarmate_api::{
   structs::main_struct::AppState,
   config::{init_cors, init_json_config},
-  // middlewares::token_middleware::CheckToken
+  middlewares::token_middleware::CheckToken
 };
 
 #[doc = "Initialize Actix Web Server"]
@@ -45,7 +45,7 @@ pub fn run(listener: TcpListener, database: Pool<Postgres>, app_name_slug: Strin
       .wrap(cors)
       .wrap(Logger::default())
       .wrap(DefaultHeaders::new().add((app_name_slug.as_str(), app_version.as_str())))
-      // .wrap(CheckToken)
+      .wrap(CheckToken)
       .wrap(RateLimiter::new(MemoryStoreActor::from(rate_limitter.clone()).start()).with_interval(Duration::from_millis(reset_request)).with_max_requests(max_request))
       .app_data(json_config)
       .app_data(Data::new(AppState { db: database.clone() }))
