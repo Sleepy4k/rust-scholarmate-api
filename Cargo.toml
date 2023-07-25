@@ -42,6 +42,7 @@ tokenizers = "0.13.3"
 maud = "0.25.0"
 rand = "0.8.4"
 regex = "1.4"
+futures = "0.3.28"
 otp = { git = "https://github.com/Sleepy4k/rust-otp-code", branch = "main" }
 rate_limit = { git = "https://github.com/Sleepy4k/rust-actix-rate-limit", branch = "main" }
 
